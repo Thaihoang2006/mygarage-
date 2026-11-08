@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyGarage – Quản Lý Bộ Sưu Tập Mô Hình</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-layout">
+        <!-- Mobile Header Bar -->
+        <header class="mobile-topbar">
+            <button id="sidebarToggleBtn" class="icon-btn" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="brand-mini">
+                <span class="brand-badge"><i class="fa-solid fa-car-side"></i></span>
+                <span class="brand-text">MyGarage</span>
+            </div>
+            <button id="quickAddMobileBtn" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </header>
+
+        <!-- Sidebar Overlay (for mobile drawer) -->
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <div class="logo-emblem">
+                        <i class="fa-solid fa-warehouse"></i>
+                    </div>
+                    <div class="brand-meta">
+                        <h1 class="brand-title">MYGARAGE</h1>
+                        <span class="brand-tagline">COLLECTION MANAGER</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active" data-view="dashboard">
+                            <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                            <span class="nav-label">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#collection" class="nav-link" data-view="collection">
+                            <span class="nav-icon"><i class="fa-solid fa-shapes"></i></span>
+                            <span class="nav-label">Bộ Sưu Tập</span>
+                            <span id="navCountBadge" class="nav-badge">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#add-model" class="nav-link" data-view="add-model">
+                            <span class="nav-icon"><i class="fa-solid fa-square-plus"></i></span>
+                            <span class="nav-label">Thêm Mô Hình</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Sidebar Footer Status Card -->
+            <div class="sidebar-footer">
+                <div class="system-status-card">
+                    <div class="status-indicator">
+                        <span id="systemStatusDot" class="status-dot online"></span>
+                        <span id="systemStatusText" class="status-text">Hệ thống sẵn sàng</span>
+                    </div>
+                    <div class="quick-val-box">
+                        <span class="quick-val-label">Ước tính giá trị</span>
+                        <span id="sidebarTotalValue" class="quick-val-number">0 ₫</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Global Top Bar -->
+            <div class="top-nav-bar">
+                <div class="page-breadcrumb">
+                    <span class="crumb-root"><i class="fa-solid fa-gauge-high"></i> Tổng quan</span>
+                    <span class="crumb-separator">/</span>
+                    <span id="currentViewCrumb" class="crumb-current">Dashboard</span>
+                </div>
+                <div class="top-nav-actions">
+                    <button id="refreshDataBtn" class="icon-action-btn" title="Làm mới dữ liệu">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button class="btn btn-primary" id="topNavAddBtn">
+                        <i class="fa-solid fa-plus"></i> <span>Thêm Mô Hình</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW 1: DASHBOARD -->
+            <section id="view-dashboard" class="content-view active">
+                <div class="view-header">
+                    <div class="title-wrap">
+                        <h2 class="view-title">Bảng Thống Kê Tổng Quan</h2>
+                        <p class="view-subtitle">Theo dõi quy mô, phân loại và giá trị bộ sưu tập mô hình cá nhân</p>
+                    </div>
+                </div>
+
+                <!-- Stats Overview Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon-wrap"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-title">Tổng Số Mô Hình</span>
+                            <div class="stat-number-wrap">
+                                <span id="statTotalCount" class="stat-number">0</span>
+                                <span class="stat-unit">mô hình</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-cars">
+                        <div class="stat-icon-wrap"><i class="fa-solid fa-car-side"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-title">Mô Hình Xe (Car)</span>
+                            <div class="stat-number-wrap">
+                                <span id="statCarCount" class="stat-number">0</span>
+                                <span id="statCarPercent" class="stat-badge">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-gundam">
+                        <div class="stat-icon-wrap"><i class="fa-solid fa-robot"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-title">Mô Hình Gundam</span>
+                            <div class="stat-number-wrap">
+                                <span id="statGundamCount" class="stat-number">0</span>
+                                <span id="statGundamPercent" class="stat-badge">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-other">
+                        <div class="stat-icon-wrap"><i class="fa-solid fa-cube"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-title">Mô Hình Khác</span>
+                            <div class="stat-number-wrap">
+                                <span id="statOtherCount" class="stat-number">0</span>
+                                <span id="statOtherPercent" class="stat-badge">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-value">
+                        <div class="stat-icon-wrap"><i class="fa-solid fa-coins"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-title">Tổng Giá Trị Ước Tính</span>
+                            <div class="stat-number-wrap">
+                                <span id="statTotalValue" class="stat-number">0 ₫</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-row">
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <i class="fa-solid fa-chart-pie accent-tan"></i>
+                                <h3>Phân Bố Theo Danh Mục</h3>
+                            </div>
+                        </div>
+                        <div class="card-body chart-body">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <i class="fa-solid fa-chart-column accent-burgundy"></i>
+                                <h3>Thương Hiệu Hàng Đầu</h3>
+                            </div>
+                        </div>
+                        <div class="card-body chart-body">
+                            <canvas id="brandChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Additions Table/List -->
+                <div class="card recent-card">
+                    <div class="card-header flex-between">
+                        <div class="card-title-group">
+                            <i class="fa-solid fa-clock-rotate-left accent-tan"></i>
+                            <h3>Mô Hình Mới Thêm Gần Đây</h3>
+                        </div>
+                        <a href="#collection" class="btn btn-outline btn-sm" id="viewAllRecentBtn">
+                            Xem tất cả <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="luxury-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ảnh</th>
+                                        <th>Tên Mô Hình</th>
+                                        <th>Danh Mục</th>
+                                        <th>Hãng</th>
+                                        <th>Tỷ Lệ</th>
+                                        <th>Giá Mua</th>
+                                        <th>Ngày Thêm</th>
+                                        <th>Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentModelsTableBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">Đang tải dữ liệu...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: MY COLLECTION -->
+            <section id="view-collection" class="content-view">
+                <div class="view-header">
+                    <div class="title-wrap">
+                        <h2 class="view-title">Bộ Sưu Tập Mô Hình</h2>
+                        <p class="view-subtitle">Toàn bộ mô hình đã được lưu trữ trong garage của bạn</p>
+                    </div>
+                    <button class="btn btn-primary" id="collectionAddBtn">
+                        <i class="fa-solid fa-plus"></i> Thêm Mô Hình Mới
+                    </button>
+                </div>
+
+                <!-- Collection Filter Controls -->
+                <div class="filter-panel card">
+                    <div class="filter-row">
+                        <!-- Search Box -->
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm theo tên mô hình, hãng sản xuất...">
+                            <button id="clearSearchBtn" class="clear-search-btn" title="Xóa tìm kiếm">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Category Filter Pills -->
+                        <div class="category-pills">
+                            <button class="pill-btn active" data-category="all">Tất cả</button>
+                            <button class="pill-btn" data-category="Car"><i class="fa-solid fa-car"></i> Xe (Car)</button>
+                            <button class="pill-btn" data-category="Gundam"><i class="fa-solid fa-robot"></i> Gundam</button>
+                            <button class="pill-btn" data-category="Other"><i class="fa-solid fa-cube"></i> Khác</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-subrow">
+                        <!-- Brand Select -->
+                        <div class="filter-group">
+                            <label for="brandFilterSelect"><i class="fa-solid fa-tag"></i> Hãng:</label>
+                            <select id="brandFilterSelect" class="form-select">
+                                <option value="all">Tất cả thương hiệu</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Select -->
+                        <div class="filter-group">
+                            <label for="sortSelect"><i class="fa-solid fa-arrow-down-short-wide"></i> Sắp xếp:</label>
+                            <select id="sortSelect" class="form-select">
+                                <option value="newest">Mới thêm gần đây</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="name_asc">Tên (A → Z)</option>
+                                <option value="name_desc">Tên (Z → A)</option>
+                                <option value="price_desc">Giá cao nhất</option>
+                                <option value="price_asc">Giá thấp nhất</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-counter">
+                            <span id="collectionResultsCount">0</span> mô hình tìm thấy
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Models Grid -->
+                <div id="modelsGrid" class="models-grid">
+                    <!-- Dynamic Model Cards Rendered Here -->
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="emptyCollectionState" class="empty-state hidden">
+                    <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <h3 class="empty-title">Không tìm thấy mô hình nào</h3>
+                    <p class="empty-desc">Không có mô hình nào khớp với bộ lọc hoặc garage của bạn đang trống.</p>
+                    <button id="resetFiltersBtn" class="btn btn-outline">
+                        <i class="fa-solid fa-rotate-left"></i> Đặt Lại Bộ Lọc
+                    </button>
+                </div>
+            </section>
+
+            <!-- VIEW 3: ADD MODEL -->
+            <section id="view-add-model" class="content-view">
+                <div class="view-header">
+                    <div class="title-wrap">
+                        <h2 class="view-title">Thêm Mô Hình Mới</h2>
+                        <p class="view-subtitle">Nhập thông số, đính kèm hình ảnh hoặc chụp trực tiếp từ camera điện thoại</p>
+                    </div>
+                </div>
+
+                <div class="form-container card">
+                    <form id="addModelForm" novalidate>
+                        <div class="form-grid">
+                            <!-- Left Column: Image Upload & Preview -->
+                            <div class="form-col-media">
+                                <label class="field-label">Hình Ảnh Mô Hình</label>
+                                <div class="upload-dropzone" id="addDropzone">
+                                    <input type="file" id="addImageInput" accept="image/jpeg,image/png,image/webp" class="file-input-hidden">
+                                    <!-- Camera Input for Mobile capture -->
+                                    <input type="file" id="addCameraInput" accept="image/*" capture="environment" class="file-input-hidden">
+
+                                    <div class="dropzone-preview hidden" id="addPreviewContainer">
+                                        <img id="addPreviewImg" src="" alt="Preview">
+                                        <div class="preview-actions">
+                                            <button type="button" class="btn-preview-action remove-img-btn" id="removeAddImgBtn" title="Gỡ ảnh">
+                                                <i class="fa-solid fa-trash-can"></i> Gỡ ảnh
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="dropzone-content" id="addDropzoneContent">
+                                        <div class="dropzone-icon">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        </div>
+                                        <h4 class="dropzone-title">Kéo & thả ảnh vào đây</h4>
+                                        <p class="dropzone-subtitle">Hỗ trợ JPG, PNG, WebP (Tối đa 5 MB)</p>
+                                        <div class="dropzone-btn-row">
+                                            <button type="button" class="btn btn-outline btn-sm" id="chooseFileBtn">
+                                                <i class="fa-solid fa-folder-open"></i> Chọn từ máy
+                                            </button>
+                                            <button type="button" class="btn btn-burgundy btn-sm" id="openCameraBtn">
+                                                <i class="fa-solid fa-camera"></i> Chụp ảnh
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Alternative: Direct Image URL -->
+                                <div class="form-group mt-3">
+                                    <label for="addImageUrlInput" class="field-label-sub">
+                                        <i class="fa-solid fa-link"></i> Hoặc dán đường link ảnh (URL online)
+                                    </label>
+                                    <input type="url" id="addImageUrlInput" class="form-input" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Info Fields -->
+                            <div class="form-col-fields">
+                                <div class="form-group">
+                                    <label for="addNameInput" class="field-label required">Tên Mô Hình</label>
+                                    <input type="text" id="addNameInput" class="form-input" placeholder="Ví dụ: Nissan Skyline GT-R (R34) V-Spec II" required>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="addCategorySelect" class="field-label required">Danh Mục</label>
+                                        <select id="addCategorySelect" class="form-select" required>
+                                            <option value="Car">Mô hình Xe (Car)</option>
+                                            <option value="Gundam">Mô hình Gundam</option>
+                                            <option value="Other">Mô hình Khác (Other)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="addBrandInput" class="field-label">Hãng Sản Xuất</label>
+                                        <input type="text" id="addBrandInput" class="form-input" placeholder="Ví dụ: Hot Wheels, Mini GT, Bandai..." list="brandDatalist">
+                                        <datalist id="brandDatalist">
+                                            <option value="Hot Wheels">
+                                            <option value="Mini GT">
+                                            <option value="Tomica Limited Vintage">
+                                            <option value="Bandai">
+                                            <option value="Tamiya">
+                                            <option value="Inno64">
+                                            <option value="Tarmac Works">
+                                            <option value="AutoArt">
+                                        </datalist>
+                                    </div>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="addScaleInput" class="field-label">Tỷ Lệ / Cấp Độ (Scale/Grade)</label>
+                                        <input type="text" id="addScaleInput" class="form-input" placeholder="Ví dụ: 1/64, 1/43, 1/18, HG 1/144, MG 1/100">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="addPriceInput" class="field-label">Giá Mua (VNĐ)</label>
+                                        <div class="input-with-affix">
+                                            <input type="number" id="addPriceInput" class="form-input" placeholder="350000" min="0" step="1000">
+                                            <span class="affix">₫</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addPurchaseDateInput" class="field-label">Ngày Mua</label>
+                                    <input type="date" id="addPurchaseDateInput" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addDescriptionInput" class="field-label">Ghi Chú / Mô Tả Chi Tiết</label>
+                                    <textarea id="addDescriptionInput" class="form-textarea" rows="4" placeholder="Tình trạng hộp, chi tiết sơn, phụ kiện đi kèm, kỷ niệm sưu tầm..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" id="cancelAddBtn">
+                                <i class="fa-solid fa-xmark"></i> Hủy Bỏ
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                                <i class="fa-solid fa-floppy-disk"></i> Lưu Mô Hình Vào Garage
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: MODEL DETAILS (VIEW 4) -->
+    <!-- ================================================================= -->
+    <div id="detailsModal" class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-header-info">
+                        <span id="detailCategoryBadge" class="badge">Car</span>
+                        <h3 id="detailModelTitle" class="modal-title">Chi Tiết Mô Hình</h3>
+                    </div>
+                    <button class="modal-close-btn" id="closeDetailModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="modal-body detail-modal-body">
+                    <div class="detail-grid">
+                        <!-- Image Container with Zoom Ability -->
+                        <div class="detail-media">
+                            <div class="detail-img-box">
+                                <img id="detailImg" src="" alt="Model Image">
+                            </div>
+                        </div>
+
+                        <!-- Info Metadata -->
+                        <div class="detail-info">
+                            <div class="detail-spec-list">
+                                <div class="spec-item">
+                                    <span class="spec-label"><i class="fa-solid fa-tag"></i> Thương hiệu:</span>
+                                    <span id="detailBrand" class="spec-value">—</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label"><i class="fa-solid fa-ruler-combined"></i> Tỷ lệ / Cấp độ:</span>
+                                    <span id="detailScale" class="spec-value">—</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label"><i class="fa-solid fa-coins"></i> Giá mua:</span>
+                                    <span id="detailPrice" class="spec-value accent-tan">—</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label"><i class="fa-regular fa-calendar"></i> Ngày mua:</span>
+                                    <span id="detailPurchaseDate" class="spec-value">—</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label"><i class="fa-regular fa-clock"></i> Ngày thêm vào garage:</span>
+                                    <span id="detailCreatedAt" class="spec-value">—</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-desc-box">
+                                <h4 class="detail-desc-title"><i class="fa-solid fa-align-left"></i> Ghi Chú & Mô Tả</h4>
+                                <p id="detailDescription" class="detail-desc-text">Chưa có mô tả.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer flex-between">
+                    <button type="button" class="btn btn-danger-outline" id="detailDeleteBtn">
+                        <i class="fa-solid fa-trash-can"></i> Xóa Mô Hình
+                    </button>
+                    <div class="footer-right-buttons">
+                        <button type="button" class="btn btn-outline" id="detailCloseBtn">Đóng</button>
+                        <button type="button" class="btn btn-primary" id="detailEditBtn">
+                            <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: EDIT MODEL -->
+    <!-- ================================================================= -->
+    <div id="editModal" class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Thông Tin Mô Hình</h3>
+                    <button class="modal-close-btn" id="closeEditModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form id="editModelForm" novalidate>
+                    <input type="hidden" id="editModelId">
+                    <div class="modal-body">
+                        <div class="form-grid">
+                            <!-- Left: Image Preview & Replace -->
+                            <div class="form-col-media">
+                                <label class="field-label">Ảnh Mô Hình Hiện Tại</label>
+                                <div class="upload-dropzone" id="editDropzone">
+                                    <input type="file" id="editImageInput" accept="image/jpeg,image/png,image/webp" class="file-input-hidden">
+                                    <input type="file" id="editCameraInput" accept="image/*" capture="environment" class="file-input-hidden">
+
+                                    <div class="dropzone-preview" id="editPreviewContainer">
+                                        <img id="editPreviewImg" src="" alt="Edit Preview">
+                                    </div>
+
+                                    <div class="dropzone-btn-row mt-2">
+                                        <button type="button" class="btn btn-outline btn-sm" id="editChooseFileBtn">
+                                            <i class="fa-solid fa-image"></i> Đổi ảnh mới
+                                        </button>
+                                        <button type="button" class="btn btn-burgundy btn-sm" id="editCameraBtn">
+                                            <i class="fa-solid fa-camera"></i> Chụp lại
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label for="editImageUrlInput" class="field-label-sub">
+                                        <i class="fa-solid fa-link"></i> Hoặc đổi URL ảnh online
+                                    </label>
+                                    <input type="url" id="editImageUrlInput" class="form-input" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+
+                            <!-- Right: Form inputs -->
+                            <div class="form-col-fields">
+                                <div class="form-group">
+                                    <label for="editNameInput" class="field-label required">Tên Mô Hình</label>
+                                    <input type="text" id="editNameInput" class="form-input" required>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="editCategorySelect" class="field-label required">Danh Mục</label>
+                                        <select id="editCategorySelect" class="form-select" required>
+                                            <option value="Car">Mô hình Xe (Car)</option>
+                                            <option value="Gundam">Mô hình Gundam</option>
+                                            <option value="Other">Mô hình Khác (Other)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="editBrandInput" class="field-label">Hãng Sản Xuất</label>
+                                        <input type="text" id="editBrandInput" class="form-input" list="brandDatalist">
+                                    </div>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="editScaleInput" class="field-label">Tỷ Lệ / Cấp Độ</label>
+                                        <input type="text" id="editScaleInput" class="form-input">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="editPriceInput" class="field-label">Giá Mua (VNĐ)</label>
+                                        <div class="input-with-affix">
+                                            <input type="number" id="editPriceInput" class="form-input" min="0" step="1000">
+                                            <span class="affix">₫</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editPurchaseDateInput" class="field-label">Ngày Mua</label>
+                                    <input type="date" id="editPurchaseDateInput" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editDescriptionInput" class="field-label">Ghi Chú / Mô Tả</label>
+                                    <textarea id="editDescriptionInput" class="form-textarea" rows="4"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" id="cancelEditBtn">Hủy</button>
+                        <button type="submit" class="btn btn-primary" id="submitEditBtn">
+                            <i class="fa-solid fa-check"></i> Lưu Thay Đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: CONFIRM DELETE -->
+    <!-- ================================================================= -->
+    <div id="deleteConfirmModal" class="modal-backdrop">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content confirm-box">
+                <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h3 class="confirm-title">Xác Nhận Xóa</h3>
+                <p class="confirm-text">
+                    Bạn có chắc chắn muốn xóa mô hình <strong id="deleteTargetName" class="accent-tan"></strong> khỏi bộ sưu tập?
+                    Hành động này không thể hoàn tác.
+                </p>
+                <div class="confirm-actions">
+                    <button type="button" class="btn btn-outline" id="cancelDeleteConfirmBtn">Hủy Bỏ</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteActionBtn">
+                        <i class="fa-solid fa-trash-can"></i> Xóa Vĩnh Viễn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables
+.env
+backend/.env
+frontend/.env
+
+# Uploaded Files (keep directory)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
