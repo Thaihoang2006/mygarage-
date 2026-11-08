@@ -1,25 +1,268 @@
 /**
  * MyGarage – Personal Model Collection Manager
  * Frontend Application Logic (Pure JavaScript)
- * Theme: Alpine Mist (Mountain Range Palette)
+ * Theme: Pastel Aesthetic (Palette -02)
+ * Features:
+ *   - Bilingual English / Vietnamese Toggle
+ *   - Corner Triangle Category Badges with Icons (Car, Gundam, Other)
+ *   - Full REST API Client & Auth Management
  */
 
 // ============================================================================
 // CONFIGURATION & API BASE URL RESOLVER
 // ============================================================================
 const getApiBaseUrl = () => {
-    // If opened directly from filesystem (file://), target localhost:5000
     if (window.location.protocol === 'file:') {
         return 'http://127.0.0.1:5000';
     }
-    // In Docker / Nginx / Kubernetes, relative path handles reverse-proxy transparently
     return '';
 };
 
 const API_BASE = getApiBaseUrl();
 
+// ============================================================================
+// BILINGUAL TRANSLATION DICTIONARY (VI / EN)
+// ============================================================================
+const i18n = {
+    vi: {
+        tagline: 'COLLECTION MANAGER',
+        navDashboard: 'Dashboard',
+        navCollection: 'Bộ Sưu Tập',
+        navAddModel: 'Thêm Mô Hình',
+        crumbOverview: 'Tổng quan',
+        adminRole: 'Quản trị viên',
+        login: 'Đăng Nhập',
+        logout: 'Đăng xuất',
+        systemReady: 'Hệ thống sẵn sàng',
+        systemConnecting: 'Đang kết nối database...',
+        systemOffline: 'Chưa kết nối backend',
+        estValue: 'Ước tính giá trị',
+        btnTopAdd: 'Thêm Mô Hình',
+        dashboardTitle: 'Bảng Thống Kê Tổng Quan',
+        dashboardSubtitle: 'Theo dõi quy mô, phân loại và giá trị bộ sưu tập mô hình cá nhân',
+        statTotalModels: 'Tổng Số Mô Hình',
+        statCars: 'Mô Hình Xe (Car)',
+        statGundams: 'Mô Hình Gundam',
+        statOthers: 'Mô Hình Khác',
+        statTotalValue: 'Tổng Giá Trị Ước Tính',
+        unitModels: 'mô hình',
+        chartCategory: 'Phân Bố Theo Danh Mục',
+        chartBrand: 'Thương Hiệu Hàng Đầu',
+        recentAdditions: 'Mô Hình Mới Thêm Gần Đây',
+        viewAll: 'Xem tất cả',
+        thImage: 'Ảnh',
+        thName: 'Tên Mô Hình',
+        thCategory: 'Danh Mục',
+        thBrand: 'Hãng',
+        thScale: 'Tỷ Lệ',
+        thPrice: 'Giá Mua',
+        thDate: 'Ngày Thêm',
+        thAction: 'Thao Tác',
+        loading: 'Đang tải dữ liệu...',
+        collectionTitle: 'Bộ Sưu Tập Mô Hình',
+        collectionSubtitle: 'Toàn bộ mô hình đã được lưu trữ trong garage của bạn',
+        btnAddModel: 'Thêm Mô Hình Mới',
+        searchPlaceholder: 'Tìm theo tên mô hình, hãng sản xuất...',
+        catAll: 'Tất cả',
+        catCars: 'Xe (Car)',
+        catGundam: 'Gundam',
+        catOther: 'Khác',
+        labelBrand: 'Hãng:',
+        optAllBrands: 'Tất cả thương hiệu',
+        labelSort: 'Sắp xếp:',
+        sortNewest: 'Mới thêm gần đây',
+        sortOldest: 'Cũ nhất',
+        sortNameAsc: 'Tên (A → Z)',
+        sortNameDesc: 'Tên (Z → A)',
+        sortPriceDesc: 'Giá cao nhất',
+        sortPriceAsc: 'Giá thấp nhất',
+        modelsFound: 'mô hình tìm thấy',
+        priceLabel: 'Giá mua',
+        btnDetail: 'Chi tiết',
+        emptyTitle: 'Không tìm thấy mô hình nào',
+        emptyDesc: 'Không có mô hình nào khớp với bộ lọc hoặc garage của bạn đang trống.',
+        resetFilters: 'Đặt Lại Bộ Lọc',
+        addTitle: 'Thêm Mô Hình Mới',
+        addSubtitle: 'Nhập thông số, đính kèm hình ảnh hoặc chụp trực tiếp từ camera điện thoại',
+        fieldImage: 'Hình Ảnh Mô Hình',
+        dropzoneTitle: 'Kéo & thả ảnh vào đây',
+        dropzoneSubtitle: 'Hỗ trợ JPG, PNG, WebP (Tối đa 5 MB)',
+        btnChooseFile: 'Chọn từ máy',
+        btnCamera: 'Chụp ảnh',
+        fieldImageUrlSub: 'Hoặc dán đường link ảnh (URL online)',
+        fieldName: 'Tên Mô Hình',
+        fieldCategory: 'Danh Mục',
+        optCar: 'Mô hình Xe (Car)',
+        optGundam: 'Mô hình Gundam',
+        optOther: 'Mô hình Khác (Other)',
+        fieldBrand: 'Hãng Sản Xuất',
+        fieldScale: 'Tỷ Lệ / Cấp Độ (Scale/Grade)',
+        fieldPrice: 'Giá Mua (VNĐ)',
+        fieldPurchaseDate: 'Ngày Mua',
+        fieldDescription: 'Ghi Chú / Mô Tả Chi Tiết',
+        btnCancel: 'Hủy Bỏ',
+        btnSaveModel: 'Lưu Mô Hình Vào Garage',
+        removeImg: 'Gỡ ảnh',
+        loginModalTitle: 'Đăng Nhập Garage',
+        loginModalSubtitle: 'Truy cập quyền quản trị bộ sưu tập mô hình',
+        loginUsernameLabel: 'Tên đăng nhập hoặc Email',
+        loginPasswordLabel: 'Mật khẩu',
+        rememberMe: 'Ghi nhớ đăng nhập',
+        forgotPassword: 'Quên mật khẩu?',
+        btnLoginAction: 'Đăng Nhập',
+        demoAccountLabel: 'Tài khoản Demo mẫu:',
+        btnQuickFill: 'Điền Nhanh',
+        btnGuestMode: 'Tiếp tục duyệt ở chế độ khách',
+        detailModalTitle: 'Chi Tiết Mô Hình',
+        specBrand: 'Thương hiệu:',
+        specScale: 'Tỷ lệ / Cấp độ:',
+        specPrice: 'Giá mua:',
+        specPurchaseDate: 'Ngày mua:',
+        specCreated: 'Ngày thêm:',
+        specNotes: 'Ghi Chú & Mô Tả',
+        btnDeleteModel: 'Xóa Mô Hình',
+        btnClose: 'Đóng',
+        btnEditModel: 'Chỉnh Sửa',
+        editModalTitle: 'Chỉnh Sửa Thông Tin Mô Hình',
+        editCurrentImg: 'Ảnh Mô Hình Hiện Tại',
+        btnChangeImg: 'Đổi ảnh mới',
+        btnRetake: 'Chụp lại',
+        editChangeUrlSub: 'Hoặc đổi URL ảnh online',
+        btnSaveChange: 'Lưu Thay Đổi',
+        deleteConfirmTitle: 'Xác Nhận Xóa',
+        deleteConfirmMsg1: 'Bạn có chắc chắn muốn xóa mô hình',
+        deleteConfirmMsg2: 'khỏi bộ sưu tập? Hành động này không thể hoàn tác.',
+        btnDeletePermanent: 'Xóa Vĩnh Viễn',
+        chartLabelCars: 'Xe (Car)',
+        chartLabelGundam: 'Gundam',
+        chartLabelOther: 'Khác',
+        chartLabelBrandCount: 'Số lượng mô hình',
+        toastLangSwitched: 'Đã chuyển sang Tiếng Việt',
+        toastRefreshing: 'Đang làm mới dữ liệu...',
+        noPrice: 'Chưa có giá'
+    },
+    en: {
+        tagline: 'COLLECTION MANAGER',
+        navDashboard: 'Dashboard',
+        navCollection: 'My Collection',
+        navAddModel: 'Add Model',
+        crumbOverview: 'Overview',
+        adminRole: 'Administrator',
+        login: 'Sign In',
+        logout: 'Log Out',
+        systemReady: 'System Ready',
+        systemConnecting: 'Connecting to database...',
+        systemOffline: 'Backend disconnected',
+        estValue: 'Est. Total Value',
+        btnTopAdd: 'Add Model',
+        dashboardTitle: 'Collection Statistics & Dashboard',
+        dashboardSubtitle: 'Monitor scale, categories, and appraisal value of personal model collections',
+        statTotalModels: 'Total Models',
+        statCars: 'Car Models',
+        statGundams: 'Gundam Kits',
+        statOthers: 'Other Collectibles',
+        statTotalValue: 'Total Estimated Value',
+        unitModels: 'items',
+        chartCategory: 'Category Distribution',
+        chartBrand: 'Top Brands & Manufacturers',
+        recentAdditions: 'Recently Added Models',
+        viewAll: 'View All',
+        thImage: 'Image',
+        thName: 'Model Name',
+        thCategory: 'Category',
+        thBrand: 'Brand',
+        thScale: 'Scale',
+        thPrice: 'Price',
+        thDate: 'Added Date',
+        thAction: 'Actions',
+        loading: 'Loading data...',
+        collectionTitle: 'My Model Collection',
+        collectionSubtitle: 'All scale models and gunpla kits stored in your garage',
+        btnAddModel: 'Add New Model',
+        searchPlaceholder: 'Search by model name, brand or notes...',
+        catAll: 'All',
+        catCars: 'Cars',
+        catGundam: 'Gundam',
+        catOther: 'Others',
+        labelBrand: 'Brand:',
+        optAllBrands: 'All Brands',
+        labelSort: 'Sort by:',
+        sortNewest: 'Recently Added',
+        sortOldest: 'Oldest Added',
+        sortNameAsc: 'Name (A → Z)',
+        sortNameDesc: 'Name (Z → A)',
+        sortPriceDesc: 'Price (High to Low)',
+        sortPriceAsc: 'Price (Low to High)',
+        modelsFound: 'models found',
+        priceLabel: 'Price',
+        btnDetail: 'Details',
+        emptyTitle: 'No models found',
+        emptyDesc: 'No models matched your filter criteria or your garage is currently empty.',
+        resetFilters: 'Reset Filters',
+        addTitle: 'Add New Model',
+        addSubtitle: 'Enter specifications, attach high-res photo or snap directly using phone camera',
+        fieldImage: 'Model Photo',
+        dropzoneTitle: 'Drag & drop image here',
+        dropzoneSubtitle: 'Supports JPG, PNG, WebP (Max 5 MB)',
+        btnChooseFile: 'Browse Device',
+        btnCamera: 'Snap Camera',
+        fieldImageUrlSub: 'Or paste external image URL',
+        fieldName: 'Model Name',
+        fieldCategory: 'Category',
+        optCar: 'Car Die-cast',
+        optGundam: 'Gundam / Gunpla',
+        optOther: 'Other Figures',
+        fieldBrand: 'Brand / Manufacturer',
+        fieldScale: 'Scale / Grade',
+        fieldPrice: 'Purchase Price (VND)',
+        fieldPurchaseDate: 'Purchase Date',
+        fieldDescription: 'Notes & Description',
+        btnCancel: 'Cancel',
+        btnSaveModel: 'Save Model to Garage',
+        removeImg: 'Remove image',
+        loginModalTitle: 'Garage Login',
+        loginModalSubtitle: 'Access personal model collection management portal',
+        loginUsernameLabel: 'Username or Email',
+        loginPasswordLabel: 'Password',
+        rememberMe: 'Remember me',
+        forgotPassword: 'Forgot password?',
+        btnLoginAction: 'Sign In',
+        demoAccountLabel: 'Demo Account:',
+        btnQuickFill: 'Quick Fill',
+        btnGuestMode: 'Continue browsing as guest',
+        detailModalTitle: 'Model Details',
+        specBrand: 'Brand:',
+        specScale: 'Scale / Grade:',
+        specPrice: 'Price:',
+        specPurchaseDate: 'Purchase Date:',
+        specCreated: 'Added On:',
+        specNotes: 'Notes & Description',
+        btnDeleteModel: 'Delete Model',
+        btnClose: 'Close',
+        btnEditModel: 'Edit Model',
+        editModalTitle: 'Edit Model Details',
+        editCurrentImg: 'Current Model Photo',
+        btnChangeImg: 'Change Image',
+        btnRetake: 'Retake Photo',
+        editChangeUrlSub: 'Or update online image URL',
+        btnSaveChange: 'Save Changes',
+        deleteConfirmTitle: 'Confirm Deletion',
+        deleteConfirmMsg1: 'Are you sure you want to delete model',
+        deleteConfirmMsg2: 'from your collection? This action cannot be undone.',
+        btnDeletePermanent: 'Delete Permanently',
+        chartLabelCars: 'Cars',
+        chartLabelGundam: 'Gundam',
+        chartLabelOther: 'Others',
+        chartLabelBrandCount: 'Number of Models',
+        toastLangSwitched: 'Switched language to English',
+        toastRefreshing: 'Refreshing collection data...',
+        noPrice: 'No price set'
+    }
+};
+
 // App State
 const state = {
+    currentLang: localStorage.getItem('mygarage_lang') || 'vi',
     currentView: 'dashboard',
     models: [],
     stats: null,
@@ -42,6 +285,13 @@ const state = {
 // DOM ELEMENTS CACHE
 // ============================================================================
 const dom = {
+    // Language Switchers
+    langToggleBtn: document.getElementById('langToggleBtn'),
+    langFlag: document.getElementById('langFlag'),
+    langLabel: document.getElementById('langLabel'),
+    mobileLangToggleBtn: document.getElementById('mobileLangToggleBtn'),
+    mobileLangFlag: document.getElementById('mobileLangFlag'),
+
     // Navigation & Views
     navLinks: document.querySelectorAll('.nav-link'),
     views: document.querySelectorAll('.content-view'),
@@ -176,10 +426,64 @@ const dom = {
 };
 
 // ============================================================================
+// LANGUAGE TOGGLE & TRANSLATION ENGINE (YÊU CẦU 2)
+// ============================================================================
+const setLanguage = (lang, triggerToast = false) => {
+    state.currentLang = lang;
+    localStorage.setItem('mygarage_lang', lang);
+
+    const dict = i18n[lang] || i18n.vi;
+
+    // Update Flag & Button Label
+    if (dom.langFlag) dom.langFlag.textContent = lang === 'vi' ? '🇻🇳' : '🇬🇧';
+    if (dom.langLabel) dom.langLabel.textContent = lang === 'vi' ? 'VI' : 'EN';
+    if (dom.mobileLangFlag) dom.mobileLangFlag.textContent = lang === 'vi' ? '🇻🇳' : '🇬🇧';
+
+    // Update all elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+            el.textContent = dict[key];
+        }
+    });
+
+    // Update dynamic placeholders
+    if (dom.searchInput) dom.searchInput.placeholder = dict.searchPlaceholder;
+
+    // Update Breadcrumb
+    const titles = {
+        'dashboard': dict.navDashboard,
+        'collection': dict.navCollection,
+        'add-model': dict.navAddModel
+    };
+    if (dom.currentViewCrumb) dom.currentViewCrumb.textContent = titles[state.currentView] || dict.navDashboard;
+
+    // Re-render charts and grids with updated language
+    if (state.stats) {
+        renderCategoryChart(state.stats.categories);
+        renderBrandChart(state.stats.top_brands);
+        renderRecentModels(state.stats.recent_models);
+    }
+    if (state.models.length > 0) {
+        renderModelsGrid(state.models);
+    }
+
+    if (triggerToast) {
+        showToast(dict.toastLangSwitched, 'info');
+    }
+};
+
+const toggleLanguage = () => {
+    const nextLang = state.currentLang === 'vi' ? 'en' : 'vi';
+    setLanguage(nextLang, true);
+};
+
+// ============================================================================
 // UTILITY HELPERS
 // ============================================================================
 const formatCurrency = (amount) => {
-    if (amount === null || amount === undefined || isNaN(amount)) return 'Chưa có giá';
+    const dict = i18n[state.currentLang] || i18n.vi;
+    if (amount === null || amount === undefined || isNaN(amount)) return dict.noPrice;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
@@ -187,7 +491,8 @@ const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const locale = state.currentLang === 'vi' ? 'vi-VN' : 'en-US';
+        return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
         return dateStr;
     }
@@ -224,12 +529,20 @@ const showToast = (message, type = 'info') => {
     }, 3500);
 };
 
+// Category Icon Resolver
+const getCategoryIcon = (category) => {
+    const cat = (category || '').toLowerCase();
+    if (cat === 'car') return 'fa-car-side';
+    if (cat === 'gundam') return 'fa-robot';
+    return 'fa-cube';
+};
+
 // ============================================================================
 // AUTHENTICATION & LOGIN LOGIC
 // ============================================================================
 const updateAuthUI = () => {
+    const dict = i18n[state.currentLang] || i18n.vi;
     if (state.currentUser && state.authToken) {
-        // Logged In
         const initials = state.currentUser.name
             ? state.currentUser.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             : 'AD';
@@ -240,12 +553,11 @@ const updateAuthUI = () => {
         if (dom.topLoginBtn) dom.topLoginBtn.classList.add('hidden');
 
         if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
-        if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = state.currentUser.role || 'Quản trị viên';
+        if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = state.currentUser.role || dict.adminRole;
         if (dom.sidebarAvatar) dom.sidebarAvatar.textContent = initials;
         if (dom.sidebarUserBox) dom.sidebarUserBox.classList.remove('hidden');
         if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.classList.add('hidden');
     } else {
-        // Logged Out
         if (dom.topUserProfile) dom.topUserProfile.classList.add('hidden');
         if (dom.topLoginBtn) dom.topLoginBtn.classList.remove('hidden');
 
@@ -270,12 +582,12 @@ const handleLoginSubmit = async (e) => {
     const password = dom.loginPassword.value.trim();
 
     if (!username || !password) {
-        showToast('Vui lòng nhập tên đăng nhập và mật khẩu!', 'error');
+        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên đăng nhập và mật khẩu!' : 'Please enter username and password!', 'error');
         return;
     }
 
     dom.submitLoginBtn.disabled = true;
-    dom.submitLoginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...';
+    dom.submitLoginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
 
     try {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -295,23 +607,22 @@ const handleLoginSubmit = async (e) => {
 
         updateAuthUI();
         closeLoginModal();
-        showToast(json.message || 'Đăng nhập thành công!', 'success');
+        showToast(json.message || 'Login successful!', 'success');
 
     } catch (err) {
         console.error('Lỗi đăng nhập:', err);
-        showToast(err.message || 'Đăng nhập thất bại. Kiểm tra lại thông tin.', 'error');
+        showToast(err.message || 'Login failed', 'error');
     } finally {
         dom.submitLoginBtn.disabled = false;
-        dom.submitLoginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập';
+        const dict = i18n[state.currentLang] || i18n.vi;
+        dom.submitLoginBtn.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> ${dict.btnLoginAction}`;
     }
 };
 
 const handleLogout = async () => {
     try {
         await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
-    } catch (e) {
-        // ignore network error on logout
-    }
+    } catch (e) {}
 
     state.currentUser = null;
     state.authToken = null;
@@ -319,7 +630,7 @@ const handleLogout = async () => {
     localStorage.removeItem('mygarage_token');
 
     updateAuthUI();
-    showToast('Đã đăng xuất an toàn.', 'info');
+    showToast(state.currentLang === 'vi' ? 'Đã đăng xuất an toàn.' : 'Logged out safely.', 'info');
     openLoginModal();
 };
 
@@ -328,6 +639,7 @@ const handleLogout = async () => {
 // ============================================================================
 const navigateTo = (viewName) => {
     state.currentView = viewName;
+    const dict = i18n[state.currentLang] || i18n.vi;
 
     // Update active nav link
     dom.navLinks.forEach(link => {
@@ -349,11 +661,11 @@ const navigateTo = (viewName) => {
 
     // Update Breadcrumb
     const titles = {
-        'dashboard': 'Dashboard',
-        'collection': 'Bộ Sưu Tập',
-        'add-model': 'Thêm Mô Hình'
+        'dashboard': dict.navDashboard,
+        'collection': dict.navCollection,
+        'add-model': dict.navAddModel
     };
-    dom.currentViewCrumb.textContent = titles[viewName] || 'Dashboard';
+    dom.currentViewCrumb.textContent = titles[viewName] || dict.navDashboard;
 
     // Close mobile sidebar if open
     closeMobileSidebar();
@@ -380,25 +692,26 @@ const closeMobileSidebar = () => {
 // SYSTEM READINESS & HEALTH CHECK
 // ============================================================================
 const checkSystemReadiness = async () => {
+    const dict = i18n[state.currentLang] || i18n.vi;
     try {
         const res = await fetch(`${API_BASE}/readyz`);
         if (res.ok) {
             dom.systemStatusDot.className = 'status-dot online';
-            dom.systemStatusText.textContent = 'MySQL & Backend Sẵn sàng';
+            dom.systemStatusText.textContent = dict.systemReady;
         } else {
             dom.systemStatusDot.className = 'status-dot';
-            dom.systemStatusDot.style.background = '#ffb142';
-            dom.systemStatusText.textContent = 'Đang chờ Database...';
+            dom.systemStatusDot.style.background = '#feca57';
+            dom.systemStatusText.textContent = dict.systemConnecting;
         }
     } catch {
         dom.systemStatusDot.className = 'status-dot';
-        dom.systemStatusDot.style.background = '#ff5252';
-        dom.systemStatusText.textContent = 'Chưa kết nối Backend';
+        dom.systemStatusDot.style.background = '#ff6b81';
+        dom.systemStatusText.textContent = dict.systemOffline;
     }
 };
 
 // ============================================================================
-// DASHBOARD STATS & CHARTS (ALPINE PALETTE)
+// DASHBOARD STATS & CHARTS (THEME PALETTE -02)
 // ============================================================================
 const loadDashboardStats = async () => {
     try {
@@ -428,7 +741,7 @@ const loadDashboardStats = async () => {
         dom.statTotalValue.textContent = formattedValue;
         dom.sidebarTotalValue.textContent = formattedValue;
 
-        // Render Charts with Alpine Mountain Palette
+        // Render Charts with Palette -02
         renderCategoryChart(data.categories);
         renderBrandChart(data.top_brands);
 
@@ -452,7 +765,8 @@ const renderCategoryChart = (categories) => {
         state.charts.category.destroy();
     }
 
-    const labels = ['Xe (Car)', 'Gundam', 'Khác'];
+    const dict = i18n[state.currentLang] || i18n.vi;
+    const labels = [dict.chartLabelCars, dict.chartLabelGundam, dict.chartLabelOther];
     const counts = [categories.Car || 0, categories.Gundam || 0, categories.Other || 0];
 
     state.charts.category = new Chart(ctx, {
@@ -462,11 +776,11 @@ const renderCategoryChart = (categories) => {
             datasets: [{
                 data: counts,
                 backgroundColor: [
-                    '#5E83BA', // Glacier Blue (Cars)
-                    '#3A4E7A', // Steel Indigo (Gundam)
-                    '#C2D2E9'  // Frost Blue (Other)
+                    '#90C9FF', // Sky Blue (Cars)
+                    '#FFAFCA', // Bubblegum Pink (Gundam)
+                    '#DEE3FF'  // Ice Lavender (Other)
                 ],
-                borderColor: '#091D36', // Midnight Navy Border
+                borderColor: '#1c1b35',
                 borderWidth: 3,
                 hoverOffset: 6
             }]
@@ -478,7 +792,7 @@ const renderCategoryChart = (categories) => {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: '#C2D2E9',
+                        color: '#DEE3FF',
                         font: { family: "'Outfit', sans-serif", size: 12 },
                         padding: 16
                     }
@@ -498,7 +812,8 @@ const renderBrandChart = (topBrands) => {
         state.charts.brand.destroy();
     }
 
-    const labels = (topBrands && topBrands.length) ? topBrands.map(b => b.brand) : ['Chưa có'];
+    const dict = i18n[state.currentLang] || i18n.vi;
+    const labels = (topBrands && topBrands.length) ? topBrands.map(b => b.brand) : ['None'];
     const counts = (topBrands && topBrands.length) ? topBrands.map(b => b.count) : [0];
 
     state.charts.brand = new Chart(ctx, {
@@ -506,13 +821,13 @@ const renderBrandChart = (topBrands) => {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Số lượng mô hình',
+                label: dict.chartLabelBrandCount,
                 data: counts,
-                backgroundColor: 'rgba(94, 131, 186, 0.65)',
-                borderColor: '#5E83BA',
+                backgroundColor: 'rgba(144, 201, 255, 0.65)',
+                borderColor: '#90C9FF',
                 borderWidth: 1.5,
                 borderRadius: 4,
-                hoverBackgroundColor: '#C2D2E9'
+                hoverBackgroundColor: '#FFAFCA'
             }]
         },
         options: {
@@ -523,12 +838,12 @@ const renderBrandChart = (topBrands) => {
             },
             scales: {
                 x: {
-                    ticks: { color: '#8ba4c7', font: { family: "'Outfit', sans-serif", size: 11 } },
+                    ticks: { color: '#9fa5c7', font: { family: "'Outfit', sans-serif", size: 11 } },
                     grid: { display: false }
                 },
                 y: {
-                    ticks: { color: '#8ba4c7', stepSize: 1, font: { family: "'Outfit', sans-serif", size: 11 } },
-                    grid: { color: 'rgba(194, 210, 233, 0.08)' },
+                    ticks: { color: '#9fa5c7', stepSize: 1, font: { family: "'Outfit', sans-serif", size: 11 } },
+                    grid: { color: 'rgba(222, 227, 255, 0.08)' },
                     beginAtZero: true
                 }
             }
@@ -538,10 +853,11 @@ const renderBrandChart = (topBrands) => {
 
 // Recent Models Table Rendering
 const renderRecentModels = (recentList) => {
+    const dict = i18n[state.currentLang] || i18n.vi;
     if (!recentList || recentList.length === 0) {
         dom.recentModelsTableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4" style="color: var(--text-dim);">Chưa có mô hình nào trong bộ sưu tập.</td>
+                <td colspan="8" class="text-center py-4" style="color: var(--text-dim);">${dict.emptyTitle}</td>
             </tr>
         `;
         return;
@@ -553,20 +869,23 @@ const renderRecentModels = (recentList) => {
                 <img src="${sanitizeImageUrl(item.image_url)}" class="table-thumb" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=100&q=80'">
             </td>
             <td><strong>${item.name}</strong></td>
-            <td><span class="badge badge-${item.category.toLowerCase()}">${item.category}</span></td>
-            <td class="accent-frost">${item.brand || '—'}</td>
+            <td>
+                <span class="badge badge-${item.category.toLowerCase()}">
+                    <i class="fa-solid ${getCategoryIcon(item.category)}"></i> ${item.category}
+                </span>
+            </td>
+            <td class="accent-sky">${item.brand || '—'}</td>
             <td>${item.scale || '—'}</td>
-            <td class="accent-frost font-bold">${formatCurrency(item.price)}</td>
+            <td class="accent-pink font-bold">${formatCurrency(item.price)}</td>
             <td style="color: var(--text-dim); font-size: 0.8rem;">${formatDate(item.created_at)}</td>
             <td>
                 <button class="btn btn-outline btn-sm view-detail-btn" data-id="${item.id}">
-                    <i class="fa-solid fa-eye"></i> Chi tiết
+                    <i class="fa-solid fa-eye"></i> ${dict.btnDetail}
                 </button>
             </td>
         </tr>
     `).join('');
 
-    // Attach event listeners to "Chi tiết" buttons
     dom.recentModelsTableBody.querySelectorAll('.view-detail-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.getAttribute('data-id'), 10);
@@ -576,12 +895,14 @@ const renderRecentModels = (recentList) => {
 };
 
 // ============================================================================
-// COLLECTION VIEW: FETCHING, FILTERING & RENDERING
+// COLLECTION VIEW: CORNER TRIANGLE BADGES (YÊU CẦU 3)
 // ============================================================================
 const updateBrandFilterOptions = (brands) => {
     if (!brands || !dom.brandFilterSelect) return;
     const currentVal = dom.brandFilterSelect.value;
-    dom.brandFilterSelect.innerHTML = '<option value="all">Tất cả thương hiệu</option>';
+    const dict = i18n[state.currentLang] || i18n.vi;
+
+    dom.brandFilterSelect.innerHTML = `<option value="all">${dict.optAllBrands}</option>`;
     brands.forEach(b => {
         const opt = document.createElement('option');
         opt.value = b;
@@ -613,11 +934,11 @@ const loadModels = async () => {
 
     } catch (err) {
         console.error('Lỗi khi tải danh sách mô hình:', err);
-        showToast('Không thể kết nối đến máy chủ MySQL', 'error');
     }
 };
 
 const renderModelsGrid = (models) => {
+    const dict = i18n[state.currentLang] || i18n.vi;
     if (!models || models.length === 0) {
         dom.modelsGrid.innerHTML = '';
         dom.emptyCollectionState.classList.remove('hidden');
@@ -626,33 +947,42 @@ const renderModelsGrid = (models) => {
 
     dom.emptyCollectionState.classList.add('hidden');
 
-    dom.modelsGrid.innerHTML = models.map(item => `
-        <div class="model-card" data-id="${item.id}">
-            <div class="card-img-wrap">
-                <img class="card-img" src="${sanitizeImageUrl(item.image_url)}" alt="${item.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
-                <div class="card-img-overlay"></div>
-                <div class="card-badge-top">
-                    <span class="badge badge-${item.category.toLowerCase()}">${item.category}</span>
-                </div>
-                ${item.scale ? `<span class="badge-scale">${item.scale}</span>` : ''}
-            </div>
+    // Render Cards with Corner Triangle Badges (Yêu cầu 3)
+    dom.modelsGrid.innerHTML = models.map(item => {
+        const catClass = (item.category || 'other').toLowerCase();
+        const iconClass = getCategoryIcon(item.category);
 
-            <div class="card-content">
-                <span class="card-brand">${item.brand || 'CHƯA RÕ HÃNG'}</span>
-                <h4 class="card-model-name" title="${item.name}">${item.name}</h4>
-
-                <div class="card-footer-row">
-                    <div class="card-price-wrap">
-                        <span class="card-price-label">Giá mua</span>
-                        <span class="card-price-value">${formatCurrency(item.price)}</span>
+        return `
+            <div class="model-card" data-id="${item.id}">
+                <div class="card-img-wrap">
+                    <img class="card-img" src="${sanitizeImageUrl(item.image_url)}" alt="${item.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
+                    <div class="card-img-overlay"></div>
+                    
+                    <!-- Corner Triangle Tag replacing rounded badge (Yêu cầu 3) -->
+                    <div class="card-corner-tag card-corner-${catClass}" title="${item.category}">
+                        <i class="fa-solid ${iconClass}"></i>
                     </div>
-                    <button class="btn btn-outline btn-sm view-detail-card-btn" data-id="${item.id}">
-                        Chi tiết <i class="fa-solid fa-arrow-right"></i>
-                    </button>
+
+                    ${item.scale ? `<span class="badge-scale">${item.scale}</span>` : ''}
+                </div>
+
+                <div class="card-content">
+                    <span class="card-brand">${item.brand || 'COLLECTION'}</span>
+                    <h4 class="card-model-name" title="${item.name}">${item.name}</h4>
+
+                    <div class="card-footer-row">
+                        <div class="card-price-wrap">
+                            <span class="card-price-label">${dict.priceLabel}</span>
+                            <span class="card-price-value">${formatCurrency(item.price)}</span>
+                        </div>
+                        <button class="btn btn-outline btn-sm view-detail-card-btn" data-id="${item.id}">
+                            ${dict.btnDetail} <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     // Attach click events on detail buttons
     dom.modelsGrid.querySelectorAll('.view-detail-card-btn').forEach(btn => {
@@ -679,11 +1009,9 @@ let addSelectedFile = null;
 let editSelectedFile = null;
 
 const setupDropzone = () => {
-    // Add Dropzone click triggers
     dom.chooseFileBtn.addEventListener('click', () => dom.addImageInput.click());
     dom.openCameraBtn.addEventListener('click', () => dom.addCameraInput.click());
 
-    // File input changes
     dom.addImageInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0], 'add'));
     dom.addCameraInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0], 'add'));
 
@@ -728,17 +1056,15 @@ const setupDropzone = () => {
 const handleFileSelection = (file, mode = 'add') => {
     if (!file) return;
 
-    // Validate size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-        showToast('Kích thước ảnh vượt quá 5MB. Vui lòng chọn ảnh nhẹ hơn.', 'error');
+        showToast(state.currentLang === 'vi' ? 'Kích thước ảnh vượt quá 5MB.' : 'File exceeds 5MB limit.', 'error');
         return;
     }
 
-    // Validate extension
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-        showToast('Chỉ chấp nhận ảnh định dạng JPG, PNG hoặc WebP.', 'error');
+        showToast(state.currentLang === 'vi' ? 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.' : 'Only JPG, PNG, or WebP allowed.', 'error');
         return;
     }
 
@@ -765,13 +1091,13 @@ const handleAddModelSubmit = async (e) => {
 
     const name = dom.addNameInput.value.trim();
     if (!name) {
-        showToast('Vui lòng nhập tên mô hình!', 'error');
+        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên mô hình!' : 'Please enter model name!', 'error');
         dom.addNameInput.focus();
         return;
     }
 
     dom.submitAddBtn.disabled = true;
-    dom.submitAddBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+    dom.submitAddBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
 
     try {
         const formData = new FormData();
@@ -797,7 +1123,7 @@ const handleAddModelSubmit = async (e) => {
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        showToast('Đã thêm mô hình mới vào garage thành công!', 'success');
+        showToast(state.currentLang === 'vi' ? 'Đã thêm mô hình mới vào garage thành công!' : 'Model successfully added!', 'success');
 
         // Reset form
         dom.addModelForm.reset();
@@ -808,10 +1134,11 @@ const handleAddModelSubmit = async (e) => {
 
     } catch (err) {
         console.error('Lỗi khi thêm mô hình:', err);
-        showToast(err.message || 'Không thể lưu mô hình', 'error');
+        showToast(err.message || 'Error saving model', 'error');
     } finally {
         dom.submitAddBtn.disabled = false;
-        dom.submitAddBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Mô Hình Vào Garage';
+        const dict = i18n[state.currentLang] || i18n.vi;
+        dom.submitAddBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${dict.btnSaveModel}`;
     }
 };
 
@@ -838,13 +1165,13 @@ const openModelDetails = async (modelId) => {
         dom.detailPrice.textContent = formatCurrency(item.price);
         dom.detailPurchaseDate.textContent = formatDate(item.purchase_date);
         dom.detailCreatedAt.textContent = formatDate(item.created_at);
-        dom.detailDescription.textContent = item.description || 'Chưa có ghi chú mô tả nào.';
+        dom.detailDescription.textContent = item.description || (state.currentLang === 'vi' ? 'Chưa có ghi chú mô tả nào.' : 'No notes available.');
 
         // Show modal
         dom.detailsModal.classList.add('show');
     } catch (err) {
         console.error('Lỗi khi mở chi tiết:', err);
-        showToast('Không thể tải thông tin mô hình', 'error');
+        showToast('Error loading model details', 'error');
     }
 };
 
@@ -887,7 +1214,6 @@ const openEditModal = async () => {
 
     } catch (err) {
         console.error('Lỗi khi mở form sửa:', err);
-        showToast('Không thể chuẩn bị form chỉnh sửa', 'error');
     }
 };
 
@@ -902,7 +1228,7 @@ const handleEditModelSubmit = async (e) => {
     const name = dom.editNameInput.value.trim();
 
     if (!name) {
-        showToast('Tên mô hình không được để trống!', 'error');
+        showToast(state.currentLang === 'vi' ? 'Tên mô hình không được để trống!' : 'Model name cannot be empty!', 'error');
         dom.editNameInput.focus();
         return;
     }
@@ -931,7 +1257,7 @@ const handleEditModelSubmit = async (e) => {
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        showToast('Cập nhật mô hình thành công!', 'success');
+        showToast(state.currentLang === 'vi' ? 'Cập nhật mô hình thành công!' : 'Model updated successfully!', 'success');
         closeEditModal();
 
         // Refresh views
@@ -943,7 +1269,7 @@ const handleEditModelSubmit = async (e) => {
 
     } catch (err) {
         console.error('Lỗi khi cập nhật mô hình:', err);
-        showToast(err.message || 'Lỗi khi cập nhật', 'error');
+        showToast(err.message || 'Update failed', 'error');
     }
 };
 
@@ -952,7 +1278,7 @@ const handleEditModelSubmit = async (e) => {
 // ============================================================================
 const openDeleteConfirmModal = () => {
     const item = state.models.find(m => m.id === state.selectedModelId);
-    dom.deleteTargetName.textContent = item ? `"${item.name}"` : 'này';
+    dom.deleteTargetName.textContent = item ? `"${item.name}"` : 'this model';
     dom.deleteConfirmModal.classList.add('show');
 };
 
@@ -971,17 +1297,16 @@ const handleConfirmDelete = async () => {
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        showToast(json.message || 'Đã xóa mô hình khỏi garage', 'success');
+        showToast(json.message || (state.currentLang === 'vi' ? 'Đã xóa mô hình khỏi garage' : 'Model deleted'), 'success');
         closeDeleteConfirmModal();
         closeDetailsModal();
 
-        // Reload views
         loadDashboardStats();
         loadModels();
 
     } catch (err) {
         console.error('Lỗi khi xóa mô hình:', err);
-        showToast(err.message || 'Không thể xóa mô hình', 'error');
+        showToast(err.message || 'Delete failed', 'error');
     }
 };
 
@@ -1056,6 +1381,10 @@ const setupFilterEvents = () => {
 // GLOBAL EVENT LISTENERS INITIALIZATION
 // ============================================================================
 const initEventListeners = () => {
+    // Language Switcher Events (Yêu cầu 2)
+    if (dom.langToggleBtn) dom.langToggleBtn.addEventListener('click', toggleLanguage);
+    if (dom.mobileLangToggleBtn) dom.mobileLangToggleBtn.addEventListener('click', toggleLanguage);
+
     // Nav Links (Sidebar)
     dom.navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -1067,7 +1396,8 @@ const initEventListeners = () => {
 
     // Top action buttons
     dom.refreshDataBtn.addEventListener('click', () => {
-        showToast('Đang làm mới dữ liệu...', 'info');
+        const dict = i18n[state.currentLang] || i18n.vi;
+        showToast(dict.toastRefreshing, 'info');
         loadDashboardStats();
         if (state.currentView === 'collection') loadModels();
         checkSystemReadiness();
@@ -1105,12 +1435,12 @@ const initEventListeners = () => {
     dom.quickFillDemoBtn.addEventListener('click', () => {
         dom.loginUsername.value = 'admin';
         dom.loginPassword.value = 'garage2026';
-        showToast('Đã điền thông tin tài khoản mẫu!', 'info');
+        showToast(state.currentLang === 'vi' ? 'Đã điền thông tin tài khoản mẫu!' : 'Filled demo credentials!', 'info');
     });
 
     if (dom.forgotPasswordLink) {
         dom.forgotPasswordLink.addEventListener('click', () => {
-            showToast('Tài khoản demo quản trị: admin / garage2026', 'info');
+            showToast('Demo Account: admin / garage2026', 'info');
         });
     }
 
@@ -1171,11 +1501,11 @@ const initEventListeners = () => {
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
+    setLanguage(state.currentLang, false);
     updateAuthUI();
     checkSystemReadiness();
     loadDashboardStats();
     loadModels();
 
-    // Periodic system readiness ping (every 30 seconds)
     setInterval(checkSystemReadiness, 30000);
 });

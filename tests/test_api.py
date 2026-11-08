@@ -149,7 +149,7 @@ class MyGarageAPITestCase(unittest.TestCase):
 
         res_css = self.client.get('/css/style.css')
         self.assertEqual(res_css.status_code, 200)
-        self.assertIn(b'#091D36', res_css.data)
+        self.assertIn(b'#FFAFCA', res_css.data)
 
         res_js = self.client.get('/js/app.js')
         self.assertEqual(res_js.status_code, 200)
