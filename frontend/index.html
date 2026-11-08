@@ -23,12 +23,17 @@
                 <i class="fa-solid fa-bars"></i>
             </button>
             <div class="brand-mini">
-                <span class="brand-badge"><i class="fa-solid fa-car-side"></i></span>
+                <span class="brand-badge"><i class="fa-solid fa-mountain"></i></span>
                 <span class="brand-text">MyGarage</span>
             </div>
-            <button id="quickAddMobileBtn" class="btn btn-primary btn-sm">
-                <i class="fa-solid fa-plus"></i>
-            </button>
+            <div class="mobile-header-actions">
+                <button id="quickLoginMobileBtn" class="icon-btn" title="Đăng nhập">
+                    <i class="fa-solid fa-user-circle"></i>
+                </button>
+                <button id="quickAddMobileBtn" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Sidebar Overlay (for mobile drawer) -->
@@ -39,7 +44,7 @@
             <div class="sidebar-header">
                 <div class="brand-logo">
                     <div class="logo-emblem">
-                        <i class="fa-solid fa-warehouse"></i>
+                        <i class="fa-solid fa-mountain"></i>
                     </div>
                     <div class="brand-meta">
                         <h1 class="brand-title">MYGARAGE</h1>
@@ -73,8 +78,26 @@
                 </ul>
             </nav>
 
-            <!-- Sidebar Footer Status Card -->
+            <!-- Sidebar Footer Status & User Card -->
             <div class="sidebar-footer">
+                <!-- User Profile Box -->
+                <div id="sidebarUserBox" class="sidebar-user-box">
+                    <div class="user-avatar-sm" id="sidebarAvatar">TH</div>
+                    <div class="user-meta-sm">
+                        <span class="user-name-sm" id="sidebarUserName">Thái Hoàng</span>
+                        <span class="user-role-sm" id="sidebarUserRole">Quản trị viên</span>
+                    </div>
+                    <button id="sidebarLogoutBtn" class="sidebar-logout-btn" title="Đăng xuất">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+
+                <!-- Login Button when logged out -->
+                <button id="sidebarLoginBtn" class="btn btn-outline btn-sm hidden" style="width: 100%;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập
+                </button>
+
+                <!-- System Readiness Card -->
                 <div class="system-status-card">
                     <div class="status-indicator">
                         <span id="systemStatusDot" class="status-dot online"></span>
@@ -101,6 +124,19 @@
                     <button id="refreshDataBtn" class="icon-action-btn" title="Làm mới dữ liệu">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
+
+                    <!-- Top User Profile Widget -->
+                    <div id="topUserProfile" class="user-profile-badge" title="Tài khoản cá nhân">
+                        <div class="user-avatar-sm" id="topAvatar">TH</div>
+                        <span id="topUserName" style="font-size: 0.85rem; font-weight: 600;">Thái Hoàng</span>
+                        <i class="fa-solid fa-circle-check" style="color: var(--color-success); font-size: 0.75rem;"></i>
+                    </div>
+
+                    <!-- Top Login Button (shown when logged out) -->
+                    <button id="topLoginBtn" class="btn btn-outline btn-sm hidden">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập
+                    </button>
+
                     <button class="btn btn-primary" id="topNavAddBtn">
                         <i class="fa-solid fa-plus"></i> <span>Thêm Mô Hình</span>
                     </button>
@@ -178,7 +214,7 @@
                     <div class="card chart-card">
                         <div class="card-header">
                             <div class="card-title-group">
-                                <i class="fa-solid fa-chart-pie accent-tan"></i>
+                                <i class="fa-solid fa-chart-pie accent-glacier"></i>
                                 <h3>Phân Bố Theo Danh Mục</h3>
                             </div>
                         </div>
@@ -190,7 +226,7 @@
                     <div class="card chart-card">
                         <div class="card-header">
                             <div class="card-title-group">
-                                <i class="fa-solid fa-chart-column accent-burgundy"></i>
+                                <i class="fa-solid fa-chart-column accent-frost"></i>
                                 <h3>Thương Hiệu Hàng Đầu</h3>
                             </div>
                         </div>
@@ -200,11 +236,11 @@
                     </div>
                 </div>
 
-                <!-- Recent Additions Table/List -->
+                <!-- Recent Additions Table -->
                 <div class="card recent-card">
                     <div class="card-header flex-between">
                         <div class="card-title-group">
-                            <i class="fa-solid fa-clock-rotate-left accent-tan"></i>
+                            <i class="fa-solid fa-clock-rotate-left accent-glacier"></i>
                             <h3>Mô Hình Mới Thêm Gần Đây</h3>
                         </div>
                         <a href="#collection" class="btn btn-outline btn-sm" id="viewAllRecentBtn">
@@ -353,7 +389,7 @@
                                             <button type="button" class="btn btn-outline btn-sm" id="chooseFileBtn">
                                                 <i class="fa-solid fa-folder-open"></i> Chọn từ máy
                                             </button>
-                                            <button type="button" class="btn btn-burgundy btn-sm" id="openCameraBtn">
+                                            <button type="button" class="btn btn-steel btn-sm" id="openCameraBtn">
                                                 <i class="fa-solid fa-camera"></i> Chụp ảnh
                                             </button>
                                         </div>
@@ -445,6 +481,68 @@
     </div>
 
     <!-- ================================================================= -->
+    <!-- MODAL: LOGIN INTERFACE -->
+    <!-- ================================================================= -->
+    <div id="loginModal" class="modal-backdrop">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content login-card">
+                <div class="login-header-hero">
+                    <div class="login-emblem">
+                        <i class="fa-solid fa-mountain"></i>
+                    </div>
+                    <h3 class="login-title">Đăng Nhập Garage</h3>
+                    <p class="login-subtitle">Truy cập quyền quản trị bộ sưu tập mô hình</p>
+                </div>
+
+                <form id="loginForm" class="p-4" style="padding: 10px 24px 24px;" novalidate>
+                    <div class="form-group">
+                        <label for="loginUsername" class="field-label required">Tên đăng nhập hoặc Email</label>
+                        <input type="text" id="loginUsername" class="form-input" placeholder="admin" required autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPassword" class="field-label required">Mật khẩu</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                            <button type="button" id="toggleLoginPasswordBtn" class="toggle-password-btn" title="Hiện/ẩn mật khẩu">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="login-extra-row">
+                        <label class="remember-label">
+                            <input type="checkbox" id="rememberMeCheck" checked> Ghi nhớ đăng nhập
+                        </label>
+                        <a href="javascript:void(0)" id="forgotPasswordLink" class="forgot-link">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="submitLoginBtn">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập
+                    </button>
+
+                    <!-- Demo Account Quick Fill Helper -->
+                    <div class="demo-account-box">
+                        <div class="demo-info">
+                            <span>Tài khoản Demo mẫu:</span>
+                            <span class="demo-credentials">admin / garage2026</span>
+                        </div>
+                        <button type="button" id="quickFillDemoBtn" class="btn-quick-fill">
+                            <i class="fa-solid fa-bolt"></i> Điền Nhanh
+                        </button>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 14px;">
+                        <button type="button" class="btn btn-outline btn-sm" id="closeLoginModalBtn">
+                            Tiếp tục duyệt ở chế độ khách
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
     <!-- MODAL: MODEL DETAILS (VIEW 4) -->
     <!-- ================================================================= -->
     <div id="detailsModal" class="modal-backdrop">
@@ -482,7 +580,7 @@
                                 </div>
                                 <div class="spec-item">
                                     <span class="spec-label"><i class="fa-solid fa-coins"></i> Giá mua:</span>
-                                    <span id="detailPrice" class="spec-value accent-tan">—</span>
+                                    <span id="detailPrice" class="spec-value accent-frost">—</span>
                                 </div>
                                 <div class="spec-item">
                                     <span class="spec-label"><i class="fa-regular fa-calendar"></i> Ngày mua:</span>
@@ -549,7 +647,7 @@
                                         <button type="button" class="btn btn-outline btn-sm" id="editChooseFileBtn">
                                             <i class="fa-solid fa-image"></i> Đổi ảnh mới
                                         </button>
-                                        <button type="button" class="btn btn-burgundy btn-sm" id="editCameraBtn">
+                                        <button type="button" class="btn btn-steel btn-sm" id="editCameraBtn">
                                             <i class="fa-solid fa-camera"></i> Chụp lại
                                         </button>
                                     </div>
@@ -634,7 +732,7 @@
                 <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <h3 class="confirm-title">Xác Nhận Xóa</h3>
                 <p class="confirm-text">
-                    Bạn có chắc chắn muốn xóa mô hình <strong id="deleteTargetName" class="accent-tan"></strong> khỏi bộ sưu tập?
+                    Bạn có chắc chắn muốn xóa mô hình <strong id="deleteTargetName" class="accent-frost"></strong> khỏi bộ sưu tập?
                     Hành động này không thể hoàn tác.
                 </p>
                 <div class="confirm-actions">

@@ -144,6 +144,67 @@ def create_app():
             app.logger.warning(f"Database connection not ready on startup: {str(e)}")
 
     # -------------------------------------------------------------------------
+    # Authentication Endpoints
+    # -------------------------------------------------------------------------
+    @app.route('/api/auth/login', methods=['POST'])
+    def auth_login():
+        """Handle login authentication."""
+        data = request.get_json(silent=True) or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.'}), 400
+
+        # Standard admin account credentials for demo & evaluation
+        valid_users = {
+            'admin': {'password': 'garage2026', 'name': 'Thái Hoàng', 'role': 'Quản trị viên'},
+            'thaihoang': {'password': 'garage2026', 'name': 'Thái Hoàng', 'role': 'Chủ Garage'}
+        }
+
+        # Accept valid users or accept any demo login if password is 'garage2026' or 'admin'
+        if username in valid_users and valid_users[username]['password'] == password:
+            user_info = valid_users[username]
+            user_info['username'] = username
+        elif password in ['garage2026', 'admin', 'password']:
+            user_info = {
+                'username': username,
+                'name': username.capitalize(),
+                'role': 'Thành viên Garage'
+            }
+        else:
+            return jsonify({'success': False, 'message': 'Sai tên đăng nhập hoặc mật khẩu! (Gợi ý demo: admin / garage2026)'}), 401
+
+        # Return session token and user info
+        token = f"mygarage-token-{uuid.uuid4().hex}"
+        return jsonify({
+            'success': True,
+            'message': f'Xin chào {user_info["name"]}, đăng nhập thành công!',
+            'token': token,
+            'user': user_info
+        }), 200
+
+    @app.route('/api/auth/logout', methods=['POST'])
+    def auth_logout():
+        """Handle logout."""
+        return jsonify({'success': True, 'message': 'Đã đăng xuất an toàn.'}), 200
+
+    @app.route('/api/auth/me', methods=['GET'])
+    def auth_me():
+        """Retrieve current authenticated user profile."""
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'message': 'Chưa đăng nhập'}), 401
+        return jsonify({
+            'success': True,
+            'user': {
+                'username': 'admin',
+                'name': 'Thái Hoàng',
+                'role': 'Quản trị viên'
+            }
+        }), 200
+
+    # -------------------------------------------------------------------------
     # System & Health Check Endpoints
     # -------------------------------------------------------------------------
     @app.route('/healthz', methods=['GET'])

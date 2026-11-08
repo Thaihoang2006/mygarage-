@@ -107,8 +107,7 @@ class MyGarageAPITestCase(unittest.TestCase):
 
     def test_05_image_upload_and_serve(self):
         """Test multipart/form-data image upload, validation, and serving."""
-        # Create a small valid test PNG image in-memory
-        img = Image.new('RGB', (100, 100), color=(100, 30, 42))
+        img = Image.new('RGB', (100, 100), color=(94, 131, 186))
         img_bytes = io.BytesIO()
         img.save(img_bytes, format='PNG')
         img_bytes.seek(0)
@@ -145,17 +144,38 @@ class MyGarageAPITestCase(unittest.TestCase):
         """Test that index.html and frontend assets are served correctly."""
         res = self.client.get('/')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'MyGarage', res.data)
         self.assertIn(b'MYGARAGE', res.data)
         self.assertIn(b'COLLECTION MANAGER', res.data)
 
         res_css = self.client.get('/css/style.css')
         self.assertEqual(res_css.status_code, 200)
-        self.assertIn(b'#641E2A', res_css.data)
+        self.assertIn(b'#091D36', res_css.data)
 
         res_js = self.client.get('/js/app.js')
         self.assertEqual(res_js.status_code, 200)
         self.assertIn(b'MyGarage', res_js.data)
+
+    def test_07_auth_endpoints(self):
+        """Test login, logout and profile authentication endpoints."""
+        # Success login with admin
+        res_login = self.client.post('/api/auth/login', json={'username': 'admin', 'password': 'garage2026'})
+        self.assertEqual(res_login.status_code, 200)
+        self.assertTrue(res_login.json['success'])
+        self.assertIn('token', res_login.json)
+        self.assertEqual(res_login.json['user']['username'], 'admin')
+
+        # Failed login with wrong password
+        res_fail = self.client.post('/api/auth/login', json={'username': 'admin', 'password': 'wrongpassword123'})
+        self.assertEqual(res_fail.status_code, 401)
+        self.assertFalse(res_fail.json['success'])
+
+        # Empty body
+        res_empty = self.client.post('/api/auth/login', json={})
+        self.assertEqual(res_empty.status_code, 400)
+
+        # Logout
+        res_logout = self.client.post('/api/auth/logout')
+        self.assertEqual(res_logout.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

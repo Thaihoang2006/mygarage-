@@ -1,6 +1,7 @@
 /**
  * MyGarage – Personal Model Collection Manager
  * Frontend Application Logic (Pure JavaScript)
+ * Theme: Alpine Mist (Mountain Range Palette)
  */
 
 // ============================================================================
@@ -28,6 +29,9 @@ const state = {
     selectedBrand: 'all',
     sortBy: 'newest',
     selectedModelId: null,
+    // Auth State
+    currentUser: JSON.parse(localStorage.getItem('mygarage_user') || '{"username": "admin", "name": "Thái Hoàng", "role": "Quản trị viên"}'),
+    authToken: localStorage.getItem('mygarage_token') || 'mygarage-demo-token',
     charts: {
         category: null,
         brand: null
@@ -49,8 +53,32 @@ const dom = {
     refreshDataBtn: document.getElementById('refreshDataBtn'),
     topNavAddBtn: document.getElementById('topNavAddBtn'),
     quickAddMobileBtn: document.getElementById('quickAddMobileBtn'),
+    quickLoginMobileBtn: document.getElementById('quickLoginMobileBtn'),
     collectionAddBtn: document.getElementById('collectionAddBtn'),
     viewAllRecentBtn: document.getElementById('viewAllRecentBtn'),
+
+    // User & Auth Elements
+    topUserProfile: document.getElementById('topUserProfile'),
+    topUserName: document.getElementById('topUserName'),
+    topAvatar: document.getElementById('topAvatar'),
+    topLoginBtn: document.getElementById('topLoginBtn'),
+    sidebarUserBox: document.getElementById('sidebarUserBox'),
+    sidebarUserName: document.getElementById('sidebarUserName'),
+    sidebarUserRole: document.getElementById('sidebarUserRole'),
+    sidebarAvatar: document.getElementById('sidebarAvatar'),
+    sidebarLogoutBtn: document.getElementById('sidebarLogoutBtn'),
+    sidebarLoginBtn: document.getElementById('sidebarLoginBtn'),
+
+    // Login Modal
+    loginModal: document.getElementById('loginModal'),
+    loginForm: document.getElementById('loginForm'),
+    loginUsername: document.getElementById('loginUsername'),
+    loginPassword: document.getElementById('loginPassword'),
+    toggleLoginPasswordBtn: document.getElementById('toggleLoginPasswordBtn'),
+    submitLoginBtn: document.getElementById('submitLoginBtn'),
+    quickFillDemoBtn: document.getElementById('quickFillDemoBtn'),
+    closeLoginModalBtn: document.getElementById('closeLoginModalBtn'),
+    forgotPasswordLink: document.getElementById('forgotPasswordLink'),
 
     // Sidebar Mobile Drawer
     sidebar: document.getElementById('sidebar'),
@@ -197,6 +225,105 @@ const showToast = (message, type = 'info') => {
 };
 
 // ============================================================================
+// AUTHENTICATION & LOGIN LOGIC
+// ============================================================================
+const updateAuthUI = () => {
+    if (state.currentUser && state.authToken) {
+        // Logged In
+        const initials = state.currentUser.name
+            ? state.currentUser.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            : 'AD';
+
+        if (dom.topUserName) dom.topUserName.textContent = state.currentUser.name;
+        if (dom.topAvatar) dom.topAvatar.textContent = initials;
+        if (dom.topUserProfile) dom.topUserProfile.classList.remove('hidden');
+        if (dom.topLoginBtn) dom.topLoginBtn.classList.add('hidden');
+
+        if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
+        if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = state.currentUser.role || 'Quản trị viên';
+        if (dom.sidebarAvatar) dom.sidebarAvatar.textContent = initials;
+        if (dom.sidebarUserBox) dom.sidebarUserBox.classList.remove('hidden');
+        if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.classList.add('hidden');
+    } else {
+        // Logged Out
+        if (dom.topUserProfile) dom.topUserProfile.classList.add('hidden');
+        if (dom.topLoginBtn) dom.topLoginBtn.classList.remove('hidden');
+
+        if (dom.sidebarUserBox) dom.sidebarUserBox.classList.add('hidden');
+        if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.classList.remove('hidden');
+    }
+};
+
+const openLoginModal = () => {
+    dom.loginModal.classList.add('show');
+    dom.loginUsername.focus();
+};
+
+const closeLoginModal = () => {
+    dom.loginModal.classList.remove('show');
+};
+
+const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+
+    const username = dom.loginUsername.value.trim();
+    const password = dom.loginPassword.value.trim();
+
+    if (!username || !password) {
+        showToast('Vui lòng nhập tên đăng nhập và mật khẩu!', 'error');
+        return;
+    }
+
+    dom.submitLoginBtn.disabled = true;
+    dom.submitLoginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        // Store session
+        state.currentUser = json.user;
+        state.authToken = json.token;
+        localStorage.setItem('mygarage_user', JSON.stringify(json.user));
+        localStorage.setItem('mygarage_token', json.token);
+
+        updateAuthUI();
+        closeLoginModal();
+        showToast(json.message || 'Đăng nhập thành công!', 'success');
+
+    } catch (err) {
+        console.error('Lỗi đăng nhập:', err);
+        showToast(err.message || 'Đăng nhập thất bại. Kiểm tra lại thông tin.', 'error');
+    } finally {
+        dom.submitLoginBtn.disabled = false;
+        dom.submitLoginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập';
+    }
+};
+
+const handleLogout = async () => {
+    try {
+        await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
+    } catch (e) {
+        // ignore network error on logout
+    }
+
+    state.currentUser = null;
+    state.authToken = null;
+    localStorage.removeItem('mygarage_user');
+    localStorage.removeItem('mygarage_token');
+
+    updateAuthUI();
+    showToast('Đã đăng xuất an toàn.', 'info');
+    openLoginModal();
+};
+
+// ============================================================================
 // NAVIGATION & VIEW SWITCHING
 // ============================================================================
 const navigateTo = (viewName) => {
@@ -260,18 +387,18 @@ const checkSystemReadiness = async () => {
             dom.systemStatusText.textContent = 'MySQL & Backend Sẵn sàng';
         } else {
             dom.systemStatusDot.className = 'status-dot';
-            dom.systemStatusDot.style.background = '#f59e0b';
+            dom.systemStatusDot.style.background = '#ffb142';
             dom.systemStatusText.textContent = 'Đang chờ Database...';
         }
     } catch {
         dom.systemStatusDot.className = 'status-dot';
-        dom.systemStatusDot.style.background = '#e63946';
+        dom.systemStatusDot.style.background = '#ff5252';
         dom.systemStatusText.textContent = 'Chưa kết nối Backend';
     }
 };
 
 // ============================================================================
-// DASHBOARD STATS & CHARTS
+// DASHBOARD STATS & CHARTS (ALPINE PALETTE)
 // ============================================================================
 const loadDashboardStats = async () => {
     try {
@@ -301,7 +428,7 @@ const loadDashboardStats = async () => {
         dom.statTotalValue.textContent = formattedValue;
         dom.sidebarTotalValue.textContent = formattedValue;
 
-        // Render Charts
+        // Render Charts with Alpine Mountain Palette
         renderCategoryChart(data.categories);
         renderBrandChart(data.top_brands);
 
@@ -335,11 +462,11 @@ const renderCategoryChart = (categories) => {
             datasets: [{
                 data: counts,
                 backgroundColor: [
-                    '#18352B', // Racing Green
-                    '#641E2A', // Polo Burgundy
-                    '#334155'  // Dark Slate Other
+                    '#5E83BA', // Glacier Blue (Cars)
+                    '#3A4E7A', // Steel Indigo (Gundam)
+                    '#C2D2E9'  // Frost Blue (Other)
                 ],
-                borderColor: '#0a1310',
+                borderColor: '#091D36', // Midnight Navy Border
                 borderWidth: 3,
                 hoverOffset: 6
             }]
@@ -351,7 +478,7 @@ const renderCategoryChart = (categories) => {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: '#C9B99A',
+                        color: '#C2D2E9',
                         font: { family: "'Outfit', sans-serif", size: 12 },
                         padding: 16
                     }
@@ -381,11 +508,11 @@ const renderBrandChart = (topBrands) => {
             datasets: [{
                 label: 'Số lượng mô hình',
                 data: counts,
-                backgroundColor: 'rgba(201, 185, 154, 0.45)',
-                borderColor: '#C9B99A',
+                backgroundColor: 'rgba(94, 131, 186, 0.65)',
+                borderColor: '#5E83BA',
                 borderWidth: 1.5,
                 borderRadius: 4,
-                hoverBackgroundColor: '#641E2A'
+                hoverBackgroundColor: '#C2D2E9'
             }]
         },
         options: {
@@ -396,12 +523,12 @@ const renderBrandChart = (topBrands) => {
             },
             scales: {
                 x: {
-                    ticks: { color: '#8e9e95', font: { family: "'Outfit', sans-serif", size: 11 } },
+                    ticks: { color: '#8ba4c7', font: { family: "'Outfit', sans-serif", size: 11 } },
                     grid: { display: false }
                 },
                 y: {
-                    ticks: { color: '#8e9e95', stepSize: 1, font: { family: "'Outfit', sans-serif", size: 11 } },
-                    grid: { color: 'rgba(201, 185, 154, 0.08)' },
+                    ticks: { color: '#8ba4c7', stepSize: 1, font: { family: "'Outfit', sans-serif", size: 11 } },
+                    grid: { color: 'rgba(194, 210, 233, 0.08)' },
                     beginAtZero: true
                 }
             }
@@ -427,9 +554,9 @@ const renderRecentModels = (recentList) => {
             </td>
             <td><strong>${item.name}</strong></td>
             <td><span class="badge badge-${item.category.toLowerCase()}">${item.category}</span></td>
-            <td class="accent-tan">${item.brand || '—'}</td>
+            <td class="accent-frost">${item.brand || '—'}</td>
             <td>${item.scale || '—'}</td>
-            <td class="accent-tan font-bold">${formatCurrency(item.price)}</td>
+            <td class="accent-frost font-bold">${formatCurrency(item.price)}</td>
             <td style="color: var(--text-dim); font-size: 0.8rem;">${formatDate(item.created_at)}</td>
             <td>
                 <button class="btn btn-outline btn-sm view-detail-btn" data-id="${item.id}">
@@ -622,7 +749,6 @@ const handleFileSelection = (file, mode = 'add') => {
         dom.addPreviewImg.src = objectUrl;
         dom.addDropzoneContent.classList.add('hidden');
         dom.addPreviewContainer.classList.remove('hidden');
-        // Clear external URL input if file is picked
         dom.addImageUrlInput.value = '';
     } else {
         editSelectedFile = file;
@@ -955,6 +1081,39 @@ const initEventListeners = () => {
         navigateTo('collection');
     });
 
+    // Auth & Login UI
+    if (dom.topUserProfile) dom.topUserProfile.addEventListener('click', openLoginModal);
+    if (dom.topLoginBtn) dom.topLoginBtn.addEventListener('click', openLoginModal);
+    if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.addEventListener('click', openLoginModal);
+    if (dom.quickLoginMobileBtn) dom.quickLoginMobileBtn.addEventListener('click', openLoginModal);
+    if (dom.sidebarLogoutBtn) dom.sidebarLogoutBtn.addEventListener('click', handleLogout);
+
+    // Login Form
+    dom.loginForm.addEventListener('submit', handleLoginSubmit);
+    dom.closeLoginModalBtn.addEventListener('click', closeLoginModal);
+
+    // Toggle Password Visibility
+    dom.toggleLoginPasswordBtn.addEventListener('click', () => {
+        const isPassword = dom.loginPassword.type === 'password';
+        dom.loginPassword.type = isPassword ? 'text' : 'password';
+        dom.toggleLoginPasswordBtn.innerHTML = isPassword 
+            ? '<i class="fa-regular fa-eye-slash"></i>' 
+            : '<i class="fa-regular fa-eye"></i>';
+    });
+
+    // Quick Fill Demo Credentials
+    dom.quickFillDemoBtn.addEventListener('click', () => {
+        dom.loginUsername.value = 'admin';
+        dom.loginPassword.value = 'garage2026';
+        showToast('Đã điền thông tin tài khoản mẫu!', 'info');
+    });
+
+    if (dom.forgotPasswordLink) {
+        dom.forgotPasswordLink.addEventListener('click', () => {
+            showToast('Tài khoản demo quản trị: admin / garage2026', 'info');
+        });
+    }
+
     // Mobile Sidebar Drawer
     dom.sidebarToggleBtn.addEventListener('click', openMobileSidebar);
     dom.sidebarOverlay.addEventListener('click', closeMobileSidebar);
@@ -981,7 +1140,7 @@ const initEventListeners = () => {
     dom.confirmDeleteActionBtn.addEventListener('click', handleConfirmDelete);
 
     // Close modals on clicking outside
-    [dom.detailsModal, dom.editModal, dom.deleteConfirmModal].forEach(modal => {
+    [dom.detailsModal, dom.editModal, dom.deleteConfirmModal, dom.loginModal].forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.classList.remove('show');
@@ -995,6 +1154,7 @@ const initEventListeners = () => {
             closeDetailsModal();
             closeEditModal();
             closeDeleteConfirmModal();
+            closeLoginModal();
             closeMobileSidebar();
         }
     });
@@ -1011,6 +1171,7 @@ const initEventListeners = () => {
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
+    updateAuthUI();
     checkSystemReadiness();
     loadDashboardStats();
     loadModels();
