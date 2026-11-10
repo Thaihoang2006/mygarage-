@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
+  namespace: mygarage
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS mygarage_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    USE mygarage_db;
+
+    CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(120) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        display_name VARCHAR(100) NULL,
+        avatar_url VARCHAR(255) NULL,
+        bio TEXT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX ix_users_username (username),
+        INDEX ix_users_email (email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE IF NOT EXISTS models (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        owner_id INT NULL,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(50) NOT NULL DEFAULT 'Car',
+        brand VARCHAR(100),
+        scale VARCHAR(50),
+        price DECIMAL(12, 2) DEFAULT NULL,
+        purchase_date DATE DEFAULT NULL,
+        image_url TEXT,
+        description TEXT,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_models_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_owner_id (owner_id),
+        INDEX idx_category (category),
+        INDEX idx_brand (brand),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE IF NOT EXISTS collections (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        owner_id INT NOT NULL,
+        name VARCHAR(150) NOT NULL,
+        description TEXT NULL,
+        cover_image_url TEXT NULL,
+        visibility VARCHAR(20) NOT NULL DEFAULT 'private',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_collections_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX ix_collections_owner_id (owner_id),
+        INDEX ix_collections_visibility (visibility)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE IF NOT EXISTS collection_models (
+        collection_id INT NOT NULL,
+        model_id INT NOT NULL,
+        added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (collection_id, model_id),
+        CONSTRAINT fk_cm_collection FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+        CONSTRAINT fk_cm_model FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    INSERT INTO models (name, category, brand, scale, price, purchase_date, image_url, description, created_at, updated_at)
+    SELECT * FROM (
+        SELECT 'Nissan Skyline GT-R (R34) V-Spec II Bayside Blue', 'Car', 'Mini GT', '1/64', 350000.00, '2026-03-15', 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80', 'Mô hình hợp kim đúc die-cast chi tiết cao, màu xanh Bayside Blue huyền thoại với mâm BBS vàng đồng đặc trưng.', NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 10 DAY
+        UNION ALL
+        SELECT 'Porsche 911 GT3 RS (992) Weissach Package', 'Car', 'Hot Wheels', '1/64', 120000.00, '2026-04-02', 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80', 'Phiên bản Premium Boulevard Series với bánh cao su Real Riders, chi tiết cánh gió khí động học sợi carbon ấn tượng.', NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 8 DAY
+        UNION ALL
+        SELECT 'Toyota Century Royal Black', 'Car', 'Tomica Limited Vintage', '1/64', 780000.00, '2026-05-20', 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=80', 'Dòng xe biểu tượng quyền lực Nhật Bản từ TLV-NEO. Nước sơn đen bóng sâu, chi tiết rèm che và nội thất nhung tái hiện tỉ mỉ.', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY
+        UNION ALL
+        SELECT 'RX-78-2 Gundam Ver.Ka', 'Gundam', 'Bandai', 'MG 1/100', 950000.00, '2026-06-10', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80', 'Bộ kit Master Grade thiết kế bởi thiên tài Katoki Hajime. Khung xương inner-frame kim loại kết hợp decal nước sắc nét.', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY
+        UNION ALL
+        SELECT 'Gundam Barbatos Lupus Rex', 'Gundam', 'Bandai', 'HG 1/144', 380000.00, '2026-07-01', 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80', 'Mô hình Barbatos dạng vuốt thú dã chiến từ series Iron-Blooded Orphans. Đã lót panel line và sơn viền móng vuốt vàng.', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY
+        UNION ALL
+        SELECT 'Mazinger Z Infinity Ver.', 'Other', 'Bandai Spirits', 'HG 1/144', 820000.00, '2026-08-14', 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80', 'Siêu robot biểu tượng Nhật Bản trong phim hoạt hình điện ảnh Mazinger Z: Infinity. Khớp biên độ rộng, Rocket Punch linh hoạt.', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY
+    ) AS tmp
+    WHERE NOT EXISTS (SELECT 1 FROM models LIMIT 1);
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: mygarage
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      initContainers:
+      - name: init-permissions
+        image: busybox
+        command: ['sh', '-c', 'chown -R 999:999 /var/lib/mysql && chmod 777 /var/lib/mysql']
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mygarage-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mygarage-config
+              key: DB_NAME
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: mygarage-config
+              key: DB_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mygarage-secret
+              key: MYSQL_PASSWORD
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        - name: mysql-init
+          mountPath: /docker-entrypoint-initdb.d
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: mysql-init
+        configMap:
+          name: mysql-init-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: mygarage
+  labels:
+    app: db
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+    name: mysql
+  selector:
+    app: db
+  type: ClusterIP

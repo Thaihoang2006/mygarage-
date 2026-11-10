@@ -27,6 +27,9 @@
                 <span class="brand-text">MyGarage</span>
             </div>
             <div class="mobile-header-actions" style="display: flex; gap: 8px; align-items: center;">
+                <button id="mobileThemeToggleBtn" class="icon-btn" title="Đổi giao diện / Switch Theme">
+                    <i class="fa-solid fa-palette"></i>
+                </button>
                 <button id="mobileLangToggleBtn" class="icon-btn" title="Đổi ngôn ngữ / Switch Language">
                     <span id="mobileLangFlag">🇻🇳</span>
                 </button>
@@ -50,7 +53,7 @@
                         <i class="fa-solid fa-cubes"></i>
                     </div>
                     <div class="brand-meta">
-                        <h1 class="brand-title">MYGARAGE</h1>
+                        <h1 class="brand-title">MYGARAGE <span class="badge" style="background: #4ade80; color: #000; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">v2.0</span></h1>
                         <span class="brand-tagline" data-i18n="tagline">COLLECTION MANAGER</span>
                     </div>
                 </div>
@@ -70,6 +73,12 @@
                             <span class="nav-icon"><i class="fa-solid fa-shapes"></i></span>
                             <span class="nav-label" data-i18n="navCollection">Bộ Sưu Tập</span>
                             <span id="navCountBadge" class="nav-badge">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#libraries" class="nav-link" data-view="libraries">
+                            <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
+                            <span class="nav-label" data-i18n="navLibraries">Thư Viện</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -124,6 +133,12 @@
                     <span id="currentViewCrumb" class="crumb-current">Dashboard</span>
                 </div>
                 <div class="top-nav-actions">
+                    <!-- Theme Switcher Button -->
+                    <button id="themeToggleBtn" class="theme-switch-btn" title="Đổi giao diện / Switch Theme">
+                        <i class="fa-solid fa-palette"></i>
+                        <span class="theme-label" id="themeLabel">Theme</span>
+                    </button>
+
                     <!-- Language Switcher Button (Yêu cầu 2) -->
                     <button id="langToggleBtn" class="lang-switch-btn" title="Đổi ngôn ngữ / Switch Language">
                         <span class="lang-flag" id="langFlag">🇻🇳</span>
@@ -307,7 +322,7 @@
                         </div>
 
                         <!-- Category Filter Pills -->
-                        <div class="category-pills">
+                        <div class="category-pills" id="categoryPillsContainer">
                             <button class="pill-btn active" data-category="all" data-i18n="catAll">Tất cả</button>
                             <button class="pill-btn" data-category="Car"><i class="fa-solid fa-car-side"></i> <span data-i18n="catCars">Xe (Car)</span></button>
                             <button class="pill-btn" data-category="Gundam"><i class="fa-solid fa-robot"></i> <span data-i18n="catGundam">Gundam</span></button>
@@ -428,7 +443,11 @@
                                             <option value="Car" data-i18n="optCar">Mô hình Xe (Car)</option>
                                             <option value="Gundam" data-i18n="optGundam">Mô hình Gundam</option>
                                             <option value="Other" data-i18n="optOther">Mô hình Khác (Other)</option>
+                                            <option value="__custom__" data-i18n="optCustomCategory">+ Thêm danh mục mới...</option>
                                         </select>
+                                        <div id="addCustomCategoryWrap" class="custom-category-input-wrap hidden">
+                                            <input type="text" id="addCustomCategoryInput" class="form-input" placeholder="Nhập tên danh mục mới (VD: Tàu hỏa, Lego, Figure...)" maxlength="50">
+                                        </div>
                                     </div>
 
                                     <div class="form-group">
@@ -486,27 +505,68 @@
                     </form>
                 </div>
             </section>
+
+            <!-- ============================================================= -->
+            <!-- VIEW: CUSTOM COLLECTIONS (THƯ VIỆN CỦA TÔI & CỘNG ĐỒNG) -->
+            <!-- ============================================================= -->
+            <section id="view-libraries" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title" data-i18n="libTitle">Thư Viện Bộ Sưu Tập</h2>
+                        <p class="view-subtitle" data-i18n="libSubtitle">Tạo và phân loại các chủ đề mô hình theo phong cách riêng của bạn</p>
+                    </div>
+                    <button class="btn btn-primary" id="openCreateColBtn">
+                        <i class="fa-solid fa-plus"></i> <span data-i18n="btnCreateLib">Tạo Thư Viện Mới</span>
+                    </button>
+                </div>
+
+                <div class="collections-header-bar">
+                    <div class="collections-tabs">
+                        <button class="col-tab-btn active" id="tabMyCols" data-tab="my" data-i18n="tabMyLibraries">Thư Viện Của Tôi</button>
+                        <button class="col-tab-btn" id="tabPublicCols" data-tab="public" data-i18n="tabPublicLibraries">Khám Phá Cộng Đồng</button>
+                    </div>
+                </div>
+
+                <!-- Collections Grid -->
+                <div class="collections-grid" id="collectionsGrid">
+                    <!-- Dynamic collection cards -->
+                </div>
+
+                <!-- Empty State for Collections -->
+                <div id="collectionsEmptyState" class="empty-state hidden">
+                    <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <h3 class="empty-title" data-i18n="libEmptyTitle">Chưa Có Thư Viện Nào</h3>
+                    <p class="empty-desc" data-i18n="libEmptyDesc">Bạn chưa tạo thư viện nào. Hãy bấm nút 'Tạo Thư Viện Mới' để bắt đầu gom nhóm các mô hình yêu thích!</p>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- ================================================================= -->
-    <!-- MODAL: LOGIN INTERFACE -->
+    <!-- MODAL: AUTHENTICATION (LOGIN & REGISTRATION) -->
     <!-- ================================================================= -->
-    <div id="loginModal" class="modal-backdrop">
+    <div id="authModal" class="modal-backdrop">
         <div class="modal-dialog modal-sm">
             <div class="modal-content login-card">
                 <div class="login-header-hero">
                     <div class="login-emblem">
                         <i class="fa-solid fa-shield-halved"></i>
                     </div>
-                    <h3 class="login-title" data-i18n="loginModalTitle">Đăng Nhập Garage</h3>
-                    <p class="login-subtitle" data-i18n="loginModalSubtitle">Truy cập quyền quản trị bộ sưu tập mô hình</p>
+                    <h3 class="login-title" id="authModalTitle" data-i18n="authModalTitle">Tài Khoản MyGarage</h3>
+                    <p class="login-subtitle" id="authModalSubtitle" data-i18n="authModalSubtitle">Quản lý và đồng bộ bộ sưu tập mô hình của bạn</p>
                 </div>
 
-                <form id="loginForm" class="p-4" style="padding: 10px 24px 24px;" novalidate>
+                <!-- Auth Navigation Tabs -->
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab-btn active" id="authTabLogin" data-i18n="tabSignIn">Đăng Nhập</button>
+                    <button type="button" class="auth-tab-btn" id="authTabRegister" data-i18n="tabSignUp">Đăng Ký</button>
+                </div>
+
+                <!-- Form 1: Login -->
+                <form id="loginForm" class="p-4" style="padding: 20px 24px 24px;" novalidate>
                     <div class="form-group">
                         <label for="loginUsername" class="field-label required" data-i18n="loginUsernameLabel">Tên đăng nhập hoặc Email</label>
-                        <input type="text" id="loginUsername" class="form-input" placeholder="admin" required autocomplete="username">
+                        <input type="text" id="loginUsername" class="form-input" placeholder="Nhập username hoặc email" required autocomplete="username">
                     </div>
 
                     <div class="form-group">
@@ -523,26 +583,67 @@
                         <label class="remember-label">
                             <input type="checkbox" id="rememberMeCheck" checked> <span data-i18n="rememberMe">Ghi nhớ đăng nhập</span>
                         </label>
-                        <a href="javascript:void(0)" id="forgotPasswordLink" class="forgot-link" data-i18n="forgotPassword">Quên mật khẩu?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-full" id="submitLoginBtn">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i> <span data-i18n="btnLoginAction">Đăng Nhập</span>
                     </button>
 
-                    <!-- Demo Account Quick Fill Helper -->
-                    <div class="demo-account-box">
-                        <div class="demo-info">
-                            <span data-i18n="demoAccountLabel">Tài khoản Demo mẫu:</span>
-                            <span class="demo-credentials">admin / garage2026</span>
-                        </div>
-                        <button type="button" id="quickFillDemoBtn" class="btn-quick-fill">
-                            <i class="fa-solid fa-bolt"></i> <span data-i18n="btnQuickFill">Điền Nhanh</span>
-                        </button>
-                    </div>
+                    <p class="auth-switch-text">
+                        <span data-i18n="noAccountText">Chưa có tài khoản?</span> 
+                        <a href="javascript:void(0)" class="auth-switch-link" id="switchToRegisterLink" data-i18n="linkRegisterNow">Đăng ký ngay</a>
+                    </p>
 
                     <div style="text-align: center; margin-top: 14px;">
                         <button type="button" class="btn btn-outline btn-sm" id="closeLoginModalBtn">
+                            <span data-i18n="btnGuestMode">Tiếp tục duyệt ở chế độ khách</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Form 2: Register -->
+                <form id="registerForm" class="p-4 hidden" style="padding: 20px 24px 24px;" novalidate>
+                    <div class="form-group">
+                        <label for="regUsername" class="field-label required" data-i18n="regUsernameLabel">Tên đăng nhập (Username)</label>
+                        <input type="text" id="regUsername" class="form-input" placeholder="ví dụ: thaihoang, car_collector" required autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regEmail" class="field-label required" data-i18n="regEmailLabel">Địa chỉ Email</label>
+                        <input type="email" id="regEmail" class="form-input" placeholder="email@domain.com" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regDisplayName" class="field-label" data-i18n="regDisplayNameLabel">Tên hiển thị (Display Name)</label>
+                        <input type="text" id="regDisplayName" class="form-input" placeholder="ví dụ: Thái Hoàng">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regPassword" class="field-label required" data-i18n="regPasswordLabel">Mật khẩu (Tối thiểu 8 ký tự)</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="regPassword" class="form-input" placeholder="Tối thiểu 8 ký tự" required autocomplete="new-password">
+                            <button type="button" id="toggleRegPasswordBtn" class="toggle-password-btn" title="Hiện/ẩn mật khẩu">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regConfirmPassword" class="field-label required" data-i18n="regConfirmPasswordLabel">Xác nhận mật khẩu</label>
+                        <input type="password" id="regConfirmPassword" class="form-input" placeholder="Nhập lại mật khẩu" required autocomplete="new-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="submitRegisterBtn">
+                        <i class="fa-solid fa-user-plus"></i> <span data-i18n="btnRegisterAction">Tạo Tài Khoản</span>
+                    </button>
+
+                    <p class="auth-switch-text">
+                        <span data-i18n="hasAccountText">Đã có tài khoản?</span> 
+                        <a href="javascript:void(0)" class="auth-switch-link" id="switchToLoginLink" data-i18n="linkLoginNow">Đăng nhập ngay</a>
+                    </p>
+
+                    <div style="text-align: center; margin-top: 14px;">
+                        <button type="button" class="btn btn-outline btn-sm" id="closeRegisterModalBtn">
                             <span data-i18n="btnGuestMode">Tiếp tục duyệt ở chế độ khách</span>
                         </button>
                     </div>
@@ -613,7 +714,10 @@
                     <button type="button" class="btn btn-danger-outline" id="detailDeleteBtn">
                         <i class="fa-solid fa-trash-can"></i> <span data-i18n="btnDeleteModel">Xóa Mô Hình</span>
                     </button>
-                    <div class="footer-right-buttons">
+                    <div class="footer-right-buttons" style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-outline" id="detailAddToColBtn">
+                            <i class="fa-solid fa-folder-plus"></i> <span data-i18n="btnAddToCol">Thêm vào Thư Viện</span>
+                        </button>
                         <button type="button" class="btn btn-outline" id="detailCloseBtn"><span data-i18n="btnClose">Đóng</span></button>
                         <button type="button" class="btn btn-primary" id="detailEditBtn">
                             <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btnEditModel">Chỉnh Sửa</span>
@@ -684,7 +788,11 @@
                                             <option value="Car" data-i18n="optCar">Mô hình Xe (Car)</option>
                                             <option value="Gundam" data-i18n="optGundam">Mô hình Gundam</option>
                                             <option value="Other" data-i18n="optOther">Mô hình Khác (Other)</option>
+                                            <option value="__custom__" data-i18n="optCustomCategory">+ Thêm danh mục mới...</option>
                                         </select>
+                                        <div id="editCustomCategoryWrap" class="custom-category-input-wrap hidden">
+                                            <input type="text" id="editCustomCategoryInput" class="form-input" placeholder="Nhập tên danh mục mới..." maxlength="50">
+                                        </div>
                                     </div>
 
                                     <div class="form-group">
@@ -750,6 +858,125 @@
                     <button type="button" class="btn btn-danger" id="confirmDeleteActionBtn">
                         <i class="fa-solid fa-trash-can"></i> <span data-i18n="btnDeletePermanent">Xóa Vĩnh Viễn</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: CREATE / EDIT COLLECTION -->
+    <!-- ================================================================= -->
+    <div id="createCollectionModal" class="modal-backdrop">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="colModalTitle" data-i18n="createColModalTitle">Tạo Thư Viện Mới</h3>
+                    <button class="modal-close-btn" id="closeCreateColModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form id="createColForm" class="p-4" style="padding: 20px 24px;" novalidate>
+                    <div class="form-group">
+                        <label for="colNameInput" class="field-label required" data-i18n="fieldColName">Tên Thư Viện</label>
+                        <input type="text" id="colNameInput" class="form-input" placeholder="ví dụ: Siêu xe Le Mans 24h, Gundam UC..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="colDescInput" class="field-label" data-i18n="fieldColDesc">Mô Tả / Giới Thiệu</label>
+                        <textarea id="colDescInput" class="form-textarea" rows="3" placeholder="Giới thiệu về mục đích hoặc chủ đề của bộ sưu tập này..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="colCoverInput" class="field-label" data-i18n="fieldColCover">URL Ảnh Bìa (Tùy chọn)</label>
+                        <input type="url" id="colCoverInput" class="form-input" placeholder="https://images.unsplash.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="colVisibilitySelect" class="field-label required" data-i18n="fieldColVisibility">Chế Độ Hiển Thị</label>
+                        <select id="colVisibilitySelect" class="form-select">
+                            <option value="private" selected data-i18n="optVisibilityPrivate">🔒 Riêng tư (Private) – Chỉ mình tôi xem được (Mặc định)</option>
+                            <option value="public" data-i18n="optVisibilityPublic">🌍 Công khai (Public) – Mọi người đều có thể khám phá</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 16px 0 0; margin-top: 16px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 8px;">
+                        <button type="button" class="btn btn-outline" id="cancelCreateColBtn"><span data-i18n="btnCancel">Hủy</span></button>
+                        <button type="submit" class="btn btn-primary" id="submitCreateColBtn">
+                            <i class="fa-solid fa-check"></i> <span data-i18n="btnSaveCol">Lưu Thư Viện</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: COLLECTION DETAILS & MODELS -->
+    <!-- ================================================================= -->
+    <div id="colDetailModal" class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-header-info">
+                        <span id="colDetailVisibilityBadge" class="badge-privacy badge-private">🔒 Riêng tư</span>
+                        <h3 id="colDetailTitle" class="modal-title">Tên Thư Viện</h3>
+                    </div>
+                    <button class="modal-close-btn" id="closeColDetailModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 24px;">
+                    <p id="colDetailDesc" style="color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;"></p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h4 style="font-family: var(--font-heading); color: var(--text-primary); font-size: 1.05rem;">
+                            <i class="fa-solid fa-shapes"></i> <span data-i18n="modelsInCollection">Mô hình trong thư viện</span> (<span id="colDetailCount">0</span>)
+                        </h4>
+                        <div id="colOwnerActions" class="hidden" style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-danger-outline btn-sm" id="deleteColBtn">
+                                <i class="fa-solid fa-trash-can"></i> <span data-i18n="btnDeleteCol">Xóa Thư Viện</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Models Inside Collection Grid -->
+                    <div id="colModelsGrid" class="models-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" id="closeColDetailBtn"><span data-i18n="btnClose">Đóng</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: ADD MODEL TO COLLECTION -->
+    <!-- ================================================================= -->
+    <div id="addToColModal" class="modal-backdrop">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" data-i18n="addToColTitle">Thêm Vào Thư Viện</h3>
+                    <button class="modal-close-btn" id="closeAddToColModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="p-4" style="padding: 20px 24px;">
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;">
+                        <span data-i18n="selectColPrompt">Chọn thư viện để lưu mô hình:</span>
+                        <strong id="targetModelNameForCol" class="accent-sky" style="display: block; margin-top: 4px;"></strong>
+                    </p>
+                    <div class="form-group">
+                        <label for="selectUserCol" class="field-label required" data-i18n="labelChooseCol">Thư viện của bạn</label>
+                        <select id="selectUserCol" class="form-select"></select>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                        <button type="button" class="btn btn-outline" id="cancelAddToColBtn"><span data-i18n="btnCancel">Hủy</span></button>
+                        <button type="button" class="btn btn-primary" id="confirmAddToColBtn">
+                            <i class="fa-solid fa-check"></i> <span data-i18n="btnConfirmAdd">Thêm Vào</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

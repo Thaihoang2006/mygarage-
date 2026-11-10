@@ -3,9 +3,12 @@
  * Frontend Application Logic (Pure JavaScript)
  * Theme: Pastel Aesthetic (Palette -02)
  * Features:
+ *   - User Authentication & Registration (Werkzeug hashed passwords, MySQL)
+ *   - Model Ownership Authorization & Strict Privacy Masking (Prices/Dates hidden for non-owners)
+ *   - Custom Collections (Thư viện mô hình: Private by default, Public community view)
  *   - Bilingual English / Vietnamese Toggle
  *   - Corner Triangle Category Badges with Icons (Car, Gundam, Other)
- *   - Full REST API Client & Auth Management
+ *   - CSRF Protection & Safe Flask Session Cookies
  */
 
 // ============================================================================
@@ -28,9 +31,11 @@ const i18n = {
         tagline: 'COLLECTION MANAGER',
         navDashboard: 'Dashboard',
         navCollection: 'Bộ Sưu Tập',
+        navLibraries: 'Thư Viện',
         navAddModel: 'Thêm Mô Hình',
         crumbOverview: 'Tổng quan',
-        adminRole: 'Quản trị viên',
+        adminRole: 'Thành viên Garage',
+        guestRole: 'Chế độ Khách',
         login: 'Đăng Nhập',
         logout: 'Đăng xuất',
         systemReady: 'Hệ thống sẵn sàng',
@@ -95,6 +100,10 @@ const i18n = {
         optCar: 'Mô hình Xe (Car)',
         optGundam: 'Mô hình Gundam',
         optOther: 'Mô hình Khác (Other)',
+        optCustomCategory: '+ Thêm danh mục mới...',
+        placeholderCustomCategory: 'Nhập tên danh mục mới (VD: Tàu hỏa, Lego, Figure...)',
+        themePastel: 'Theme Pastel',
+        themeVintage: 'Theme Cổ Điển',
         fieldBrand: 'Hãng Sản Xuất',
         fieldScale: 'Tỷ Lệ / Cấp Độ (Scale/Grade)',
         fieldPrice: 'Giá Mua (VNĐ)',
@@ -103,16 +112,29 @@ const i18n = {
         btnCancel: 'Hủy Bỏ',
         btnSaveModel: 'Lưu Mô Hình Vào Garage',
         removeImg: 'Gỡ ảnh',
-        loginModalTitle: 'Đăng Nhập Garage',
-        loginModalSubtitle: 'Truy cập quyền quản trị bộ sưu tập mô hình',
+        
+        // Auth strings
+        authModalTitle: 'Tài Khoản MyGarage',
+        authModalSubtitle: 'Quản lý và đồng bộ bộ sưu tập mô hình của bạn',
+        tabSignIn: 'Đăng Nhập',
+        tabSignUp: 'Đăng Ký',
         loginUsernameLabel: 'Tên đăng nhập hoặc Email',
         loginPasswordLabel: 'Mật khẩu',
         rememberMe: 'Ghi nhớ đăng nhập',
-        forgotPassword: 'Quên mật khẩu?',
         btnLoginAction: 'Đăng Nhập',
-        demoAccountLabel: 'Tài khoản Demo mẫu:',
-        btnQuickFill: 'Điền Nhanh',
+        noAccountText: 'Chưa có tài khoản?',
+        linkRegisterNow: 'Đăng ký ngay',
+        hasAccountText: 'Đã có tài khoản?',
+        linkLoginNow: 'Đăng nhập ngay',
+        regUsernameLabel: 'Tên đăng nhập (Username)',
+        regEmailLabel: 'Địa chỉ Email',
+        regDisplayNameLabel: 'Tên hiển thị (Display Name)',
+        regPasswordLabel: 'Mật khẩu (Tối thiểu 8 ký tự)',
+        regConfirmPasswordLabel: 'Xác nhận mật khẩu',
+        btnRegisterAction: 'Tạo Tài Khoản',
         btnGuestMode: 'Tiếp tục duyệt ở chế độ khách',
+
+        // Detail Modal
         detailModalTitle: 'Chi Tiết Mô Hình',
         specBrand: 'Thương hiệu:',
         specScale: 'Tỷ lệ / Cấp độ:',
@@ -123,6 +145,7 @@ const i18n = {
         btnDeleteModel: 'Xóa Mô Hình',
         btnClose: 'Đóng',
         btnEditModel: 'Chỉnh Sửa',
+        btnAddToCol: 'Thêm vào Thư Viện',
         editModalTitle: 'Chỉnh Sửa Thông Tin Mô Hình',
         editCurrentImg: 'Ảnh Mô Hình Hiện Tại',
         btnChangeImg: 'Đổi ảnh mới',
@@ -139,32 +162,59 @@ const i18n = {
         chartLabelBrandCount: 'Số lượng mô hình',
         toastLangSwitched: 'Đã chuyển sang Tiếng Việt',
         toastRefreshing: 'Đang làm mới dữ liệu...',
-        noPrice: 'Chưa có giá'
+        noPrice: 'Chưa cập nhật',
+        notUpdated: 'Chưa cập nhật',
+
+        // Libraries / Collections
+        libTitle: 'Thư Viện Bộ Sưu Tập',
+        libSubtitle: 'Tạo và phân loại các chủ đề mô hình theo phong cách riêng của bạn',
+        btnCreateLib: 'Tạo Thư Viện Mới',
+        tabMyLibraries: 'Thư Viện Của Tôi',
+        tabPublicLibraries: 'Khám Phá Cộng Đồng',
+        libEmptyTitle: 'Chưa Có Thư Viện Nào',
+        libEmptyDesc: 'Bạn chưa có thư viện nào trong mục này. Bấm "Tạo Thư Viện Mới" để bắt đầu gom nhóm!',
+        createColModalTitle: 'Tạo Thư Viện Mới',
+        fieldColName: 'Tên Thư Viện',
+        fieldColDesc: 'Mô Tả / Giới Thiệu',
+        fieldColCover: 'URL Ảnh Bìa (Tùy chọn)',
+        fieldColVisibility: 'Chế Độ Hiển Thị',
+        optVisibilityPrivate: '🔒 Riêng tư (Private) – Chỉ mình tôi xem được (Mặc định)',
+        optVisibilityPublic: '🌍 Công khai (Public) – Mọi người đều có thể khám phá',
+        btnSaveCol: 'Lưu Thư Viện',
+        modelsInCollection: 'Mô hình trong thư viện',
+        btnDeleteCol: 'Xóa Thư Viện',
+        addToColTitle: 'Thêm Vào Thư Viện',
+        selectColPrompt: 'Chọn thư viện để lưu mô hình:',
+        labelChooseCol: 'Thư viện của bạn',
+        btnConfirmAdd: 'Thêm Vào',
+        requireLoginToAdd: 'Vui lòng đăng nhập để thêm mô hình vào garage của bạn.'
     },
     en: {
         tagline: 'COLLECTION MANAGER',
         navDashboard: 'Dashboard',
         navCollection: 'My Collection',
+        navLibraries: 'Libraries',
         navAddModel: 'Add Model',
         crumbOverview: 'Overview',
-        adminRole: 'Administrator',
+        adminRole: 'Garage Member',
+        guestRole: 'Guest Mode',
         login: 'Sign In',
-        logout: 'Log Out',
+        logout: 'Sign Out',
         systemReady: 'System Ready',
         systemConnecting: 'Connecting to database...',
-        systemOffline: 'Backend disconnected',
-        estValue: 'Est. Total Value',
+        systemOffline: 'Backend Disconnected',
+        estValue: 'Estimated Value',
         btnTopAdd: 'Add Model',
-        dashboardTitle: 'Collection Statistics & Dashboard',
-        dashboardSubtitle: 'Monitor scale, categories, and appraisal value of personal model collections',
+        dashboardTitle: 'Overview Dashboard',
+        dashboardSubtitle: 'Monitor scale, categorization, and estimated valuation of your models',
         statTotalModels: 'Total Models',
-        statCars: 'Car Models',
+        statCars: 'Car Die-casts',
         statGundams: 'Gundam Kits',
         statOthers: 'Other Collectibles',
-        statTotalValue: 'Total Estimated Value',
-        unitModels: 'items',
+        statTotalValue: 'Total Est. Value',
+        unitModels: 'models',
         chartCategory: 'Category Distribution',
-        chartBrand: 'Top Brands & Manufacturers',
+        chartBrand: 'Top Manufacturers',
         recentAdditions: 'Recently Added Models',
         viewAll: 'View All',
         thImage: 'Image',
@@ -174,21 +224,21 @@ const i18n = {
         thScale: 'Scale',
         thPrice: 'Price',
         thDate: 'Added Date',
-        thAction: 'Actions',
+        thAction: 'Action',
         loading: 'Loading data...',
-        collectionTitle: 'My Model Collection',
-        collectionSubtitle: 'All scale models and gunpla kits stored in your garage',
+        collectionTitle: 'Model Collection',
+        collectionSubtitle: 'Explore all the miniature models currently saved in your garage',
         btnAddModel: 'Add New Model',
-        searchPlaceholder: 'Search by model name, brand or notes...',
+        searchPlaceholder: 'Search by model name, brand...',
         catAll: 'All',
         catCars: 'Cars',
         catGundam: 'Gundam',
         catOther: 'Others',
         labelBrand: 'Brand:',
         optAllBrands: 'All Brands',
-        labelSort: 'Sort by:',
-        sortNewest: 'Recently Added',
-        sortOldest: 'Oldest Added',
+        labelSort: 'Sort By:',
+        sortNewest: 'Newest First',
+        sortOldest: 'Oldest First',
         sortNameAsc: 'Name (A → Z)',
         sortNameDesc: 'Name (Z → A)',
         sortPriceDesc: 'Price (High to Low)',
@@ -212,6 +262,10 @@ const i18n = {
         optCar: 'Car Die-cast',
         optGundam: 'Gundam / Gunpla',
         optOther: 'Other Figures',
+        optCustomCategory: '+ Add new category...',
+        placeholderCustomCategory: 'Enter custom category name (e.g. Train, Lego, Figure...)',
+        themePastel: 'Pastel Theme',
+        themeVintage: 'Vintage Theme',
         fieldBrand: 'Brand / Manufacturer',
         fieldScale: 'Scale / Grade',
         fieldPrice: 'Purchase Price (VND)',
@@ -220,16 +274,29 @@ const i18n = {
         btnCancel: 'Cancel',
         btnSaveModel: 'Save Model to Garage',
         removeImg: 'Remove image',
-        loginModalTitle: 'Garage Login',
-        loginModalSubtitle: 'Access personal model collection management portal',
+
+        // Auth strings
+        authModalTitle: 'MyGarage Account',
+        authModalSubtitle: 'Manage and sync your personal model collections',
+        tabSignIn: 'Sign In',
+        tabSignUp: 'Sign Up',
         loginUsernameLabel: 'Username or Email',
         loginPasswordLabel: 'Password',
         rememberMe: 'Remember me',
-        forgotPassword: 'Forgot password?',
         btnLoginAction: 'Sign In',
-        demoAccountLabel: 'Demo Account:',
-        btnQuickFill: 'Quick Fill',
+        noAccountText: "Don't have an account?",
+        linkRegisterNow: 'Register now',
+        hasAccountText: 'Already have an account?',
+        linkLoginNow: 'Sign in now',
+        regUsernameLabel: 'Username',
+        regEmailLabel: 'Email Address',
+        regDisplayNameLabel: 'Display Name',
+        regPasswordLabel: 'Password (Min 8 chars)',
+        regConfirmPasswordLabel: 'Confirm Password',
+        btnRegisterAction: 'Create Account',
         btnGuestMode: 'Continue browsing as guest',
+
+        // Detail Modal
         detailModalTitle: 'Model Details',
         specBrand: 'Brand:',
         specScale: 'Scale / Grade:',
@@ -240,6 +307,7 @@ const i18n = {
         btnDeleteModel: 'Delete Model',
         btnClose: 'Close',
         btnEditModel: 'Edit Model',
+        btnAddToCol: 'Add to Library',
         editModalTitle: 'Edit Model Details',
         editCurrentImg: 'Current Model Photo',
         btnChangeImg: 'Change Image',
@@ -256,25 +324,62 @@ const i18n = {
         chartLabelBrandCount: 'Number of Models',
         toastLangSwitched: 'Switched language to English',
         toastRefreshing: 'Refreshing collection data...',
-        noPrice: 'No price set'
+        noPrice: 'Not updated',
+        notUpdated: 'Not updated',
+
+        // Libraries / Collections
+        libTitle: 'Model Libraries',
+        libSubtitle: 'Curate and organize themed miniature collections',
+        btnCreateLib: 'Create New Library',
+        tabMyLibraries: 'My Libraries',
+        tabPublicLibraries: 'Community Showcase',
+        libEmptyTitle: 'No Libraries Found',
+        libEmptyDesc: 'You do not have any libraries here yet. Click "Create New Library" to start organizing!',
+        createColModalTitle: 'Create New Library',
+        fieldColName: 'Library Name',
+        fieldColDesc: 'Description',
+        fieldColCover: 'Cover Image URL (Optional)',
+        fieldColVisibility: 'Visibility Mode',
+        optVisibilityPrivate: '🔒 Private – Visible only to you (Default)',
+        optVisibilityPublic: '🌍 Public – Visible to everyone',
+        btnSaveCol: 'Save Library',
+        modelsInCollection: 'Models in this library',
+        btnDeleteCol: 'Delete Library',
+        addToColTitle: 'Add to Library',
+        selectColPrompt: 'Choose a library for this model:',
+        labelChooseCol: 'Your Libraries',
+        btnConfirmAdd: 'Add Model',
+        requireLoginToAdd: 'Please sign in to add models to your garage.'
     }
 };
 
-// App State
+// ============================================================================
+// APP STATE
+// ============================================================================
 const state = {
     currentLang: localStorage.getItem('mygarage_lang') || 'vi',
+    currentTheme: localStorage.getItem('mygarage_theme') || 'pastel',
     currentView: 'dashboard',
     models: [],
     stats: null,
     categories: ['Car', 'Gundam', 'Other'],
+    availableCategories: ['Car', 'Gundam', 'Other'],
     activeCategory: 'all',
     searchQuery: '',
     selectedBrand: 'all',
     sortBy: 'newest',
     selectedModelId: null,
-    // Auth State
-    currentUser: JSON.parse(localStorage.getItem('mygarage_user') || '{"username": "admin", "name": "Thái Hoàng", "role": "Quản trị viên"}'),
-    authToken: localStorage.getItem('mygarage_token') || 'mygarage-demo-token',
+    
+    // Auth & Session
+    currentUser: null,
+    csrfToken: null,
+
+    // Custom Collections State
+    collections: [],
+    activeColTab: 'my',
+    selectedColId: null,
+    selectedModelForCol: null,
+
     charts: {
         category: null,
         brand: null
@@ -285,6 +390,11 @@ const state = {
 // DOM ELEMENTS CACHE
 // ============================================================================
 const dom = {
+    // Theme Switchers
+    themeToggleBtn: document.getElementById('themeToggleBtn'),
+    themeLabel: document.getElementById('themeLabel'),
+    mobileThemeToggleBtn: document.getElementById('mobileThemeToggleBtn'),
+
     // Language Switchers
     langToggleBtn: document.getElementById('langToggleBtn'),
     langFlag: document.getElementById('langFlag'),
@@ -319,16 +429,31 @@ const dom = {
     sidebarLogoutBtn: document.getElementById('sidebarLogoutBtn'),
     sidebarLoginBtn: document.getElementById('sidebarLoginBtn'),
 
-    // Login Modal
-    loginModal: document.getElementById('loginModal'),
+    // Auth Modal (Login & Register)
+    authModal: document.getElementById('authModal'),
+    authModalTitle: document.getElementById('authModalTitle'),
+    authModalSubtitle: document.getElementById('authModalSubtitle'),
+    authTabLogin: document.getElementById('authTabLogin'),
+    authTabRegister: document.getElementById('authTabRegister'),
     loginForm: document.getElementById('loginForm'),
+    registerForm: document.getElementById('registerForm'),
     loginUsername: document.getElementById('loginUsername'),
     loginPassword: document.getElementById('loginPassword'),
     toggleLoginPasswordBtn: document.getElementById('toggleLoginPasswordBtn'),
     submitLoginBtn: document.getElementById('submitLoginBtn'),
-    quickFillDemoBtn: document.getElementById('quickFillDemoBtn'),
+    switchToRegisterLink: document.getElementById('switchToRegisterLink'),
+    switchToLoginLink: document.getElementById('switchToLoginLink'),
     closeLoginModalBtn: document.getElementById('closeLoginModalBtn'),
-    forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+    closeRegisterModalBtn: document.getElementById('closeRegisterModalBtn'),
+    
+    // Register Form Fields
+    regUsername: document.getElementById('regUsername'),
+    regEmail: document.getElementById('regEmail'),
+    regDisplayName: document.getElementById('regDisplayName'),
+    regPassword: document.getElementById('regPassword'),
+    regConfirmPassword: document.getElementById('regConfirmPassword'),
+    toggleRegPasswordBtn: document.getElementById('toggleRegPasswordBtn'),
+    submitRegisterBtn: document.getElementById('submitRegisterBtn'),
 
     // Sidebar Mobile Drawer
     sidebar: document.getElementById('sidebar'),
@@ -349,18 +474,21 @@ const dom = {
     // Collection Elements
     searchInput: document.getElementById('searchInput'),
     clearSearchBtn: document.getElementById('clearSearchBtn'),
-    categoryPills: document.querySelectorAll('.pill-btn'),
+    categoryPillsContainer: document.getElementById('categoryPillsContainer'),
+    categoryPills: document.querySelectorAll('.category-pills .pill-btn'),
     brandFilterSelect: document.getElementById('brandFilterSelect'),
     sortSelect: document.getElementById('sortSelect'),
-    collectionResultsCount: document.getElementById('collectionResultsCount'),
+    resetFiltersBtn: document.getElementById('resetFiltersBtn'),
     modelsGrid: document.getElementById('modelsGrid'),
     emptyCollectionState: document.getElementById('emptyCollectionState'),
-    resetFiltersBtn: document.getElementById('resetFiltersBtn'),
+    collectionResultsCount: document.getElementById('collectionResultsCount'),
 
-    // Add Model Form Elements
+    // Add Model Form
     addModelForm: document.getElementById('addModelForm'),
     addNameInput: document.getElementById('addNameInput'),
     addCategorySelect: document.getElementById('addCategorySelect'),
+    addCustomCategoryWrap: document.getElementById('addCustomCategoryWrap'),
+    addCustomCategoryInput: document.getElementById('addCustomCategoryInput'),
     addBrandInput: document.getElementById('addBrandInput'),
     addScaleInput: document.getElementById('addScaleInput'),
     addPriceInput: document.getElementById('addPriceInput'),
@@ -381,10 +509,8 @@ const dom = {
 
     // Details Modal
     detailsModal: document.getElementById('detailsModal'),
-    closeDetailModalBtn: document.getElementById('closeDetailModalBtn'),
-    detailCloseBtn: document.getElementById('detailCloseBtn'),
-    detailCategoryBadge: document.getElementById('detailCategoryBadge'),
     detailModelTitle: document.getElementById('detailModelTitle'),
+    detailCategoryBadge: document.getElementById('detailCategoryBadge'),
     detailImg: document.getElementById('detailImg'),
     detailBrand: document.getElementById('detailBrand'),
     detailScale: document.getElementById('detailScale'),
@@ -392,17 +518,20 @@ const dom = {
     detailPurchaseDate: document.getElementById('detailPurchaseDate'),
     detailCreatedAt: document.getElementById('detailCreatedAt'),
     detailDescription: document.getElementById('detailDescription'),
+    closeDetailModalBtn: document.getElementById('closeDetailModalBtn'),
+    detailCloseBtn: document.getElementById('detailCloseBtn'),
     detailEditBtn: document.getElementById('detailEditBtn'),
     detailDeleteBtn: document.getElementById('detailDeleteBtn'),
+    detailAddToColBtn: document.getElementById('detailAddToColBtn'),
 
-    // Edit Modal
+    // Edit Model Modal
     editModal: document.getElementById('editModal'),
-    closeEditModalBtn: document.getElementById('closeEditModalBtn'),
-    cancelEditBtn: document.getElementById('cancelEditBtn'),
     editModelForm: document.getElementById('editModelForm'),
     editModelId: document.getElementById('editModelId'),
     editNameInput: document.getElementById('editNameInput'),
     editCategorySelect: document.getElementById('editCategorySelect'),
+    editCustomCategoryWrap: document.getElementById('editCustomCategoryWrap'),
+    editCustomCategoryInput: document.getElementById('editCustomCategoryInput'),
     editBrandInput: document.getElementById('editBrandInput'),
     editScaleInput: document.getElementById('editScaleInput'),
     editPriceInput: document.getElementById('editPriceInput'),
@@ -414,32 +543,75 @@ const dom = {
     editPreviewImg: document.getElementById('editPreviewImg'),
     editChooseFileBtn: document.getElementById('editChooseFileBtn'),
     editCameraBtn: document.getElementById('editCameraBtn'),
+    closeEditModalBtn: document.getElementById('closeEditModalBtn'),
+    cancelEditBtn: document.getElementById('cancelEditBtn'),
+    submitEditBtn: document.getElementById('submitEditBtn'),
 
-    // Confirm Delete Modal
+    // Delete Confirm Modal
     deleteConfirmModal: document.getElementById('deleteConfirmModal'),
     deleteTargetName: document.getElementById('deleteTargetName'),
     cancelDeleteConfirmBtn: document.getElementById('cancelDeleteConfirmBtn'),
     confirmDeleteActionBtn: document.getElementById('confirmDeleteActionBtn'),
+
+    // Custom Collections View Elements
+    openCreateColBtn: document.getElementById('openCreateColBtn'),
+    tabMyCols: document.getElementById('tabMyCols'),
+    tabPublicCols: document.getElementById('tabPublicCols'),
+    collectionsGrid: document.getElementById('collectionsGrid'),
+    collectionsEmptyState: document.getElementById('collectionsEmptyState'),
+
+    // Create Collection Modal
+    createCollectionModal: document.getElementById('createCollectionModal'),
+    createColForm: document.getElementById('createColForm'),
+    colNameInput: document.getElementById('colNameInput'),
+    colDescInput: document.getElementById('colDescInput'),
+    colCoverInput: document.getElementById('colCoverInput'),
+    colVisibilitySelect: document.getElementById('colVisibilitySelect'),
+    closeCreateColModalBtn: document.getElementById('closeCreateColModalBtn'),
+    cancelCreateColBtn: document.getElementById('cancelCreateColBtn'),
+
+    // Collection Details Modal
+    colDetailModal: document.getElementById('colDetailModal'),
+    colDetailVisibilityBadge: document.getElementById('colDetailVisibilityBadge'),
+    colDetailTitle: document.getElementById('colDetailTitle'),
+    colDetailDesc: document.getElementById('colDetailDesc'),
+    colDetailCount: document.getElementById('colDetailCount'),
+    colOwnerActions: document.getElementById('colOwnerActions'),
+    deleteColBtn: document.getElementById('deleteColBtn'),
+    colModelsGrid: document.getElementById('colModelsGrid'),
+    closeColDetailModalBtn: document.getElementById('closeColDetailModalBtn'),
+    closeColDetailBtn: document.getElementById('closeColDetailBtn'),
+
+    // Add To Collection Modal
+    addToColModal: document.getElementById('addToColModal'),
+    targetModelNameForCol: document.getElementById('targetModelNameForCol'),
+    selectUserCol: document.getElementById('selectUserCol'),
+    cancelAddToColBtn: document.getElementById('cancelAddToColBtn'),
+    confirmAddToColBtn: document.getElementById('confirmAddToColBtn'),
+    closeAddToColModalBtn: document.getElementById('closeAddToColModalBtn'),
 
     // Toast Container
     toastContainer: document.getElementById('toastContainer')
 };
 
 // ============================================================================
-// LANGUAGE TOGGLE & TRANSLATION ENGINE (YÊU CẦU 2)
+// BILINGUAL LANGUAGE ENGINE
 // ============================================================================
 const setLanguage = (lang, triggerToast = false) => {
     state.currentLang = lang;
     localStorage.setItem('mygarage_lang', lang);
 
+    document.documentElement.lang = lang;
+    const isVi = lang === 'vi';
+
+    // Update Flag and text labels
+    if (dom.langFlag) dom.langFlag.textContent = isVi ? '🇻🇳' : '🇬🇧';
+    if (dom.langLabel) dom.langLabel.textContent = isVi ? 'VI' : 'EN';
+    if (dom.mobileLangFlag) dom.mobileLangFlag.textContent = isVi ? '🇻🇳' : '🇬🇧';
+
     const dict = i18n[lang] || i18n.vi;
 
-    // Update Flag & Button Label
-    if (dom.langFlag) dom.langFlag.textContent = lang === 'vi' ? '🇻🇳' : '🇬🇧';
-    if (dom.langLabel) dom.langLabel.textContent = lang === 'vi' ? 'VI' : 'EN';
-    if (dom.mobileLangFlag) dom.mobileLangFlag.textContent = lang === 'vi' ? '🇻🇳' : '🇬🇧';
-
-    // Update all elements with data-i18n
+    // Apply translations to all DOM elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (dict[key]) {
@@ -447,18 +619,21 @@ const setLanguage = (lang, triggerToast = false) => {
         }
     });
 
-    // Update dynamic placeholders
     if (dom.searchInput) dom.searchInput.placeholder = dict.searchPlaceholder;
+    if (dom.themeLabel) {
+        dom.themeLabel.textContent = state.currentTheme === 'vintage' ? dict.themeVintage : dict.themePastel;
+    }
 
     // Update Breadcrumb
     const titles = {
         'dashboard': dict.navDashboard,
         'collection': dict.navCollection,
+        'libraries': dict.navLibraries,
         'add-model': dict.navAddModel
     };
     if (dom.currentViewCrumb) dom.currentViewCrumb.textContent = titles[state.currentView] || dict.navDashboard;
 
-    // Re-render charts and grids with updated language
+    // Re-render UI components with updated language
     if (state.stats) {
         renderCategoryChart(state.stats.categories);
         renderBrandChart(state.stats.top_brands);
@@ -467,6 +642,8 @@ const setLanguage = (lang, triggerToast = false) => {
     if (state.models.length > 0) {
         renderModelsGrid(state.models);
     }
+
+    updateAuthUI();
 
     if (triggerToast) {
         showToast(dict.toastLangSwitched, 'info');
@@ -479,22 +656,71 @@ const toggleLanguage = () => {
 };
 
 // ============================================================================
+// THEME SWITCHER ENGINE (PASTEL <-> VINTAGE RACING)
+// ============================================================================
+const initTheme = () => {
+    const savedTheme = localStorage.getItem('mygarage_theme') || 'pastel';
+    applyTheme(savedTheme, false);
+};
+
+const applyTheme = (themeName, triggerToast = false) => {
+    state.currentTheme = themeName;
+    localStorage.setItem('mygarage_theme', themeName);
+    const dict = i18n[state.currentLang] || i18n.vi;
+
+    if (themeName === 'vintage') {
+        document.body.classList.add('theme-vintage');
+        if (dom.themeLabel) {
+            dom.themeLabel.textContent = dict.themeVintage;
+        }
+    } else {
+        document.body.classList.remove('theme-vintage');
+        if (dom.themeLabel) {
+            dom.themeLabel.textContent = dict.themePastel;
+        }
+    }
+
+    if (state.stats) {
+        renderCategoryChart(state.stats.categories);
+        renderBrandChart(state.stats.top_brands);
+    }
+
+    if (triggerToast) {
+        const msg = themeName === 'vintage'
+            ? (state.currentLang === 'vi' ? 'Đã đổi sang Theme Cổ Điển (Polo Burgundy & Racing Green)' : 'Switched to Vintage Automotive Theme')
+            : (state.currentLang === 'vi' ? 'Đã đổi sang Theme Pastel Mặc Định' : 'Switched to Default Pastel Theme');
+        showToast(msg, 'info');
+    }
+};
+
+const toggleTheme = () => {
+    const nextTheme = state.currentTheme === 'vintage' ? 'pastel' : 'vintage';
+    applyTheme(nextTheme, true);
+};
+
+// ============================================================================
 // UTILITY HELPERS
 // ============================================================================
 const formatCurrency = (amount) => {
     const dict = i18n[state.currentLang] || i18n.vi;
-    if (amount === null || amount === undefined || isNaN(amount)) return dict.noPrice;
+    if (amount === null || amount === undefined || amount === '' || isNaN(amount)) {
+        return dict.notUpdated || 'Chưa cập nhật';
+    }
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
 const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
+    const dict = i18n[state.currentLang] || i18n.vi;
+    if (!dateStr || dateStr === 'None' || dateStr === 'null') {
+        return dict.notUpdated || 'Chưa cập nhật';
+    }
     try {
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dict.notUpdated || 'Chưa cập nhật';
         const locale = state.currentLang === 'vi' ? 'vi-VN' : 'en-US';
         return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
-        return dateStr;
+        return dict.notUpdated || 'Chưa cập nhật';
     }
 };
 
@@ -506,7 +732,6 @@ const sanitizeImageUrl = (url) => {
     return url;
 };
 
-// Toast Notifications
 const showToast = (message, type = 'info') => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
@@ -529,31 +754,105 @@ const showToast = (message, type = 'info') => {
     }, 3500);
 };
 
-// Category Icon Resolver
 const getCategoryIcon = (category) => {
-    const cat = (category || '').toLowerCase();
-    if (cat === 'car') return 'fa-car-side';
-    if (cat === 'gundam') return 'fa-robot';
-    return 'fa-cube';
+    const cat = (category || '').toLowerCase().trim();
+    if (cat.includes('car') || cat.includes('xe') || cat.includes('oto') || cat.includes('ô tô')) return 'fa-car-side';
+    if (cat.includes('gundam') || cat.includes('gunpla') || cat.includes('robot') || cat.includes('mecha')) return 'fa-robot';
+    if (cat.includes('plane') || cat.includes('bay') || cat.includes('aircraft')) return 'fa-plane';
+    if (cat.includes('ship') || cat.includes('tàu') || cat.includes('thuyền') || cat.includes('boat')) return 'fa-ship';
+    if (cat.includes('moto') || cat.includes('bike')) return 'fa-motorcycle';
+    if (cat.includes('figure') || cat.includes('tượng') || cat.includes('anime')) return 'fa-person';
+    if (cat.includes('lego') || cat.includes('brick')) return 'fa-cubes-stacked';
+    return 'fa-shapes';
+};
+
+const syncAvailableCategories = (cats) => {
+    if (!Array.isArray(cats)) return;
+    cats.forEach(c => {
+        const trimmed = (c || '').trim();
+        if (trimmed && !state.availableCategories.includes(trimmed)) {
+            state.availableCategories.push(trimmed);
+        }
+    });
+
+    // Populate #addCategorySelect and #editCategorySelect options if not present
+    [dom.addCategorySelect, dom.editCategorySelect].forEach(select => {
+        if (!select) return;
+        const customOpt = select.querySelector('option[value="__custom__"]');
+        state.availableCategories.forEach(cat => {
+            if (!select.querySelector(`option[value="${cat}"]`)) {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                if (customOpt) {
+                    select.insertBefore(opt, customOpt);
+                } else {
+                    select.appendChild(opt);
+                }
+            }
+        });
+    });
+
+    // Populate category pills on collection view
+    if (dom.categoryPillsContainer) {
+        const existingPills = Array.from(dom.categoryPillsContainer.querySelectorAll('.pill-btn'));
+        const existingCats = existingPills.map(p => p.getAttribute('data-category'));
+
+        state.availableCategories.forEach(cat => {
+            if (!existingCats.includes(cat)) {
+                const btn = document.createElement('button');
+                btn.className = `pill-btn ${state.activeCategory === cat ? 'active' : ''}`;
+                btn.setAttribute('data-category', cat);
+                btn.innerHTML = `<i class="fa-solid ${getCategoryIcon(cat)}"></i> <span>${cat}</span>`;
+                dom.categoryPillsContainer.appendChild(btn);
+            }
+        });
+    }
 };
 
 // ============================================================================
-// AUTHENTICATION & LOGIN LOGIC
+// AUTHENTICATION & SESSION MANAGEMENT
 // ============================================================================
+const checkCurrentUser = async () => {
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+
+        if (json.csrf_token) {
+            state.csrfToken = json.csrf_token;
+        }
+
+        if (json.authenticated && json.user) {
+            state.currentUser = json.user;
+        } else {
+            state.currentUser = null;
+        }
+    } catch (err) {
+        console.warn('Backend auth check skipped:', err);
+        state.currentUser = null;
+    } finally {
+        updateAuthUI();
+    }
+};
+
 const updateAuthUI = () => {
     const dict = i18n[state.currentLang] || i18n.vi;
-    if (state.currentUser && state.authToken) {
-        const initials = state.currentUser.name
-            ? state.currentUser.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-            : 'AD';
 
-        if (dom.topUserName) dom.topUserName.textContent = state.currentUser.name;
+    if (state.currentUser) {
+        const displayName = state.currentUser.display_name || state.currentUser.username;
+        const initials = displayName
+            ? displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            : 'U';
+
+        if (dom.topUserName) dom.topUserName.textContent = displayName;
         if (dom.topAvatar) dom.topAvatar.textContent = initials;
         if (dom.topUserProfile) dom.topUserProfile.classList.remove('hidden');
         if (dom.topLoginBtn) dom.topLoginBtn.classList.add('hidden');
 
-        if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
-        if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = state.currentUser.role || dict.adminRole;
+        if (dom.sidebarUserName) dom.sidebarUserName.textContent = displayName;
+        if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = `@${state.currentUser.username}`;
         if (dom.sidebarAvatar) dom.sidebarAvatar.textContent = initials;
         if (dom.sidebarUserBox) dom.sidebarUserBox.classList.remove('hidden');
         if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.classList.add('hidden');
@@ -566,13 +865,32 @@ const updateAuthUI = () => {
     }
 };
 
-const openLoginModal = () => {
-    dom.loginModal.classList.add('show');
-    dom.loginUsername.focus();
+const openAuthModal = (initialTab = 'login') => {
+    switchAuthTab(initialTab);
+    dom.authModal.classList.add('show');
+    if (initialTab === 'login') {
+        dom.loginUsername.focus();
+    } else {
+        dom.regUsername.focus();
+    }
 };
 
-const closeLoginModal = () => {
-    dom.loginModal.classList.remove('show');
+const closeAuthModal = () => {
+    dom.authModal.classList.remove('show');
+};
+
+const switchAuthTab = (tab) => {
+    if (tab === 'login') {
+        dom.authTabLogin.classList.add('active');
+        dom.authTabRegister.classList.remove('active');
+        dom.loginForm.classList.remove('hidden');
+        dom.registerForm.classList.add('hidden');
+    } else {
+        dom.authTabRegister.classList.add('active');
+        dom.authTabLogin.classList.remove('active');
+        dom.registerForm.classList.remove('hidden');
+        dom.loginForm.classList.add('hidden');
+    }
 };
 
 const handleLoginSubmit = async (e) => {
@@ -582,7 +900,7 @@ const handleLoginSubmit = async (e) => {
     const password = dom.loginPassword.value.trim();
 
     if (!username || !password) {
-        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên đăng nhập và mật khẩu!' : 'Please enter username and password!', 'error');
+        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên đăng nhập và mật khẩu!' : 'Please enter credentials!', 'error');
         return;
     }
 
@@ -593,21 +911,24 @@ const handleLoginSubmit = async (e) => {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ username, password })
         });
 
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        // Store session
         state.currentUser = json.user;
-        state.authToken = json.token;
-        localStorage.setItem('mygarage_user', JSON.stringify(json.user));
-        localStorage.setItem('mygarage_token', json.token);
+        if (json.csrf_token) state.csrfToken = json.csrf_token;
 
         updateAuthUI();
-        closeLoginModal();
-        showToast(json.message || 'Login successful!', 'success');
+        closeAuthModal();
+        showToast(json.message, 'success');
+
+        // Refresh stats and models with ownership permissions unlocked
+        loadDashboardStats();
+        loadModels();
+        if (state.currentView === 'libraries') loadCollections();
 
     } catch (err) {
         console.error('Lỗi đăng nhập:', err);
@@ -619,19 +940,88 @@ const handleLoginSubmit = async (e) => {
     }
 };
 
+const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+
+    const username = dom.regUsername.value.trim();
+    const email = dom.regEmail.value.trim();
+    const displayName = dom.regDisplayName.value.trim();
+    const password = dom.regPassword.value;
+    const confirmPassword = dom.regConfirmPassword.value;
+
+    if (!username || !email || !password) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng điền đủ Username, Email và Mật khẩu!' : 'Please fill all required fields!', 'error');
+        return;
+    }
+
+    if (password.length < 8) {
+        showToast(state.currentLang === 'vi' ? 'Mật khẩu phải có độ dài tối thiểu 8 ký tự!' : 'Password must be at least 8 characters!', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showToast(state.currentLang === 'vi' ? 'Mật khẩu xác nhận không khớp!' : 'Passwords do not match!', 'error');
+        return;
+    }
+
+    dom.submitRegisterBtn.disabled = true;
+    dom.submitRegisterBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                username,
+                email,
+                display_name: displayName,
+                password,
+                confirm_password: confirmPassword
+            })
+        });
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        state.currentUser = json.user;
+        if (json.csrf_token) state.csrfToken = json.csrf_token;
+
+        updateAuthUI();
+        closeAuthModal();
+        showToast(json.message, 'success');
+
+        loadDashboardStats();
+        loadModels();
+        if (state.currentView === 'libraries') loadCollections();
+
+    } catch (err) {
+        console.error('Lỗi đăng ký:', err);
+        showToast(err.message || 'Registration failed', 'error');
+    } finally {
+        dom.submitRegisterBtn.disabled = false;
+        const dict = i18n[state.currentLang] || i18n.vi;
+        dom.submitRegisterBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> ${dict.btnRegisterAction}`;
+    }
+};
+
 const handleLogout = async () => {
     try {
-        await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
+        await fetch(`${API_BASE}/api/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: state.csrfToken ? { 'X-CSRF-Token': state.csrfToken } : {}
+        });
     } catch (e) {}
 
     state.currentUser = null;
-    state.authToken = null;
-    localStorage.removeItem('mygarage_user');
-    localStorage.removeItem('mygarage_token');
-
     updateAuthUI();
     showToast(state.currentLang === 'vi' ? 'Đã đăng xuất an toàn.' : 'Logged out safely.', 'info');
-    openLoginModal();
+    
+    // Refresh to update masked prices
+    loadDashboardStats();
+    loadModels();
+    if (state.currentView === 'libraries') loadCollections();
 };
 
 // ============================================================================
@@ -663,18 +1053,20 @@ const navigateTo = (viewName) => {
     const titles = {
         'dashboard': dict.navDashboard,
         'collection': dict.navCollection,
+        'libraries': dict.navLibraries,
         'add-model': dict.navAddModel
     };
     dom.currentViewCrumb.textContent = titles[viewName] || dict.navDashboard;
 
-    // Close mobile sidebar if open
     closeMobileSidebar();
 
-    // Trigger data fetch if needed
+    // Trigger data fetch for view
     if (viewName === 'dashboard') {
         loadDashboardStats();
     } else if (viewName === 'collection') {
         loadModels();
+    } else if (viewName === 'libraries') {
+        loadCollections();
     }
 };
 
@@ -699,47 +1091,50 @@ const checkSystemReadiness = async () => {
             dom.systemStatusDot.className = 'status-dot online';
             dom.systemStatusText.textContent = dict.systemReady;
         } else {
-            dom.systemStatusDot.className = 'status-dot';
-            dom.systemStatusDot.style.background = '#feca57';
+            dom.systemStatusDot.className = 'status-dot connecting';
             dom.systemStatusText.textContent = dict.systemConnecting;
         }
     } catch {
-        dom.systemStatusDot.className = 'status-dot';
-        dom.systemStatusDot.style.background = '#ff6b81';
+        dom.systemStatusDot.className = 'status-dot offline';
         dom.systemStatusText.textContent = dict.systemOffline;
     }
 };
 
 // ============================================================================
-// DASHBOARD STATS & CHARTS (THEME PALETTE -02)
+// DASHBOARD STATS & CHARTS (CHART.JS WITH PALETTE -02)
 // ============================================================================
 const loadDashboardStats = async () => {
     try {
-        const res = await fetch(`${API_BASE}/api/stats`);
+        const res = await fetch(`${API_BASE}/api/stats`, {
+            credentials: 'include'
+        });
         const json = await res.json();
-
         if (!json.success) throw new Error(json.message);
 
         const data = json.data;
         state.stats = data;
 
-        // Update Stat Numbers
+        // Animate counter values
         dom.statTotalCount.textContent = data.total;
-        dom.navCountBadge.textContent = data.total;
         dom.statCarCount.textContent = data.total_cars;
         dom.statGundamCount.textContent = data.total_gundams;
         dom.statOtherCount.textContent = data.total_others;
 
-        // Percentages
+        // If user is authenticated, show their personal total value
+        if (state.currentUser && data.my_value !== undefined) {
+            dom.statTotalValue.textContent = formatCurrency(data.my_value);
+            dom.sidebarTotalValue.textContent = formatCurrency(data.my_value);
+        } else {
+            // For public / guests, hide aggregate value or show masked notice
+            dom.statTotalValue.textContent = formatCurrency(null);
+            dom.sidebarTotalValue.textContent = '—';
+        }
+
+        // Percentage calculations
         const total = data.total || 1;
         dom.statCarPercent.textContent = `${Math.round((data.total_cars / total) * 100)}%`;
         dom.statGundamPercent.textContent = `${Math.round((data.total_gundams / total) * 100)}%`;
         dom.statOtherPercent.textContent = `${Math.round((data.total_others / total) * 100)}%`;
-
-        // Value
-        const formattedValue = formatCurrency(data.total_value);
-        dom.statTotalValue.textContent = formattedValue;
-        dom.sidebarTotalValue.textContent = formattedValue;
 
         // Render Charts with Palette -02
         renderCategoryChart(data.categories);
@@ -748,15 +1143,20 @@ const loadDashboardStats = async () => {
         // Render Recent Models
         renderRecentModels(data.recent_models);
 
-        // Populate Brand Dropdown for Collection Filter
+        // Update brand filter datalist
         updateBrandFilterOptions(data.available_brands);
+
+        // Sync custom categories across UI
+        if (data.available_categories) {
+            syncAvailableCategories(data.available_categories);
+        }
 
     } catch (err) {
         console.error('Lỗi khi tải thống kê:', err);
     }
 };
 
-// Category Donut Chart (Chart.js)
+// Category Donut Chart
 const renderCategoryChart = (categories) => {
     const ctx = document.getElementById('categoryChart');
     if (!ctx) return;
@@ -766,23 +1166,42 @@ const renderCategoryChart = (categories) => {
     }
 
     const dict = i18n[state.currentLang] || i18n.vi;
-    const labels = [dict.chartLabelCars, dict.chartLabelGundam, dict.chartLabelOther];
-    const counts = [categories.Car || 0, categories.Gundam || 0, categories.Other || 0];
+    const isVintage = state.currentTheme === 'vintage';
+
+    const labels = [];
+    const data = [];
+    const colors = isVintage
+        ? ['#C9B99A', '#641E2A', '#18352B', '#dfd4bc', '#832737', '#2e5f50', '#a3957a', '#c29d38']
+        : ['#90C9FF', '#FFAFCA', '#DEE3FF', '#BDE0FE', '#FFC8DC', '#A2D2FF', '#86efac', '#fde047'];
+
+    if (categories && typeof categories === 'object') {
+        Object.entries(categories).forEach(([cat, count]) => {
+            if (count > 0 || cat === 'Car' || cat === 'Gundam' || cat === 'Other') {
+                let label = cat;
+                if (cat === 'Car') label = dict.chartLabelCars;
+                else if (cat === 'Gundam') label = dict.chartLabelGundam;
+                else if (cat === 'Other') label = dict.chartLabelOther;
+                labels.push(label);
+                data.push(count);
+            }
+        });
+    }
+
+    if (labels.length === 0) {
+        labels.push(dict.chartLabelCars, dict.chartLabelGundam, dict.chartLabelOther);
+        data.push(0, 0, 0);
+    }
 
     state.charts.category = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
-                data: counts,
-                backgroundColor: [
-                    '#90C9FF', // Sky Blue (Cars)
-                    '#FFAFCA', // Bubblegum Pink (Gundam)
-                    '#DEE3FF'  // Ice Lavender (Other)
-                ],
-                borderColor: '#1c1b35',
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: isVintage ? '#0b1713' : '#131224',
                 borderWidth: 3,
-                hoverOffset: 6
+                hoverOffset: 8
             }]
         },
         options: {
@@ -792,9 +1211,10 @@ const renderCategoryChart = (categories) => {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: '#DEE3FF',
+                        color: isVintage ? '#C9B99A' : '#DEE3FF',
                         font: { family: "'Outfit', sans-serif", size: 12 },
-                        padding: 16
+                        padding: 16,
+                        usePointStyle: true
                     }
                 }
             },
@@ -803,7 +1223,7 @@ const renderCategoryChart = (categories) => {
     });
 };
 
-// Brand Bar Chart (Chart.js)
+// Brand Bar Chart
 const renderBrandChart = (topBrands) => {
     const ctx = document.getElementById('brandChart');
     if (!ctx) return;
@@ -895,7 +1315,7 @@ const renderRecentModels = (recentList) => {
 };
 
 // ============================================================================
-// COLLECTION VIEW: CORNER TRIANGLE BADGES (YÊU CẦU 3)
+// COLLECTION VIEW: CORNER TRIANGLE BADGES & FILTERS
 // ============================================================================
 const updateBrandFilterOptions = (brands) => {
     if (!brands || !dom.brandFilterSelect) return;
@@ -922,12 +1342,16 @@ const loadModels = async () => {
         if (state.selectedBrand && state.selectedBrand !== 'all') params.append('brand', state.selectedBrand);
         if (state.sortBy) params.append('sort', state.sortBy);
 
-        const res = await fetch(`${API_BASE}/api/models?${params.toString()}`);
+        const res = await fetch(`${API_BASE}/api/models?${params.toString()}`, {
+            credentials: 'include'
+        });
         const json = await res.json();
 
         if (!json.success) throw new Error(json.message);
 
         state.models = json.data;
+        const foundCategories = state.models.map(m => m.category).filter(Boolean);
+        syncAvailableCategories(foundCategories);
         renderModelsGrid(state.models);
         dom.collectionResultsCount.textContent = json.count;
         dom.navCountBadge.textContent = json.count;
@@ -947,7 +1371,6 @@ const renderModelsGrid = (models) => {
 
     dom.emptyCollectionState.classList.add('hidden');
 
-    // Render Cards with Corner Triangle Badges (Yêu cầu 3)
     dom.modelsGrid.innerHTML = models.map(item => {
         const catClass = (item.category || 'other').toLowerCase();
         const iconClass = getCategoryIcon(item.category);
@@ -958,7 +1381,7 @@ const renderModelsGrid = (models) => {
                     <img class="card-img" src="${sanitizeImageUrl(item.image_url)}" alt="${item.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
                     <div class="card-img-overlay"></div>
                     
-                    <!-- Corner Triangle Tag replacing rounded badge (Yêu cầu 3) -->
+                    <!-- Corner Triangle Tag with Icon -->
                     <div class="card-corner-tag card-corner-${catClass}" title="${item.category}">
                         <i class="fa-solid ${iconClass}"></i>
                     </div>
@@ -984,7 +1407,6 @@ const renderModelsGrid = (models) => {
         `;
     }).join('');
 
-    // Attach click events on detail buttons
     dom.modelsGrid.querySelectorAll('.view-detail-card-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -993,7 +1415,6 @@ const renderModelsGrid = (models) => {
         });
     });
 
-    // Also clicking whole card opens details
     dom.modelsGrid.querySelectorAll('.model-card').forEach(card => {
         card.addEventListener('click', () => {
             const id = parseInt(card.getAttribute('data-id'), 10);
@@ -1015,7 +1436,6 @@ const setupDropzone = () => {
     dom.addImageInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0], 'add'));
     dom.addCameraInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0], 'add'));
 
-    // Drag and Drop
     ['dragenter', 'dragover'].forEach(name => {
         dom.addDropzone.addEventListener(name, (e) => {
             e.preventDefault();
@@ -1035,7 +1455,6 @@ const setupDropzone = () => {
         if (file) handleFileSelection(file, 'add');
     });
 
-    // Remove preview
     dom.removeAddImgBtn.addEventListener('click', () => {
         addSelectedFile = null;
         dom.addImageInput.value = '';
@@ -1045,7 +1464,6 @@ const setupDropzone = () => {
         dom.addDropzoneContent.classList.remove('hidden');
     });
 
-    // Edit modal file inputs
     dom.editChooseFileBtn.addEventListener('click', () => dom.editImageInput.click());
     dom.editCameraBtn.addEventListener('click', () => dom.editCameraInput.click());
 
@@ -1053,28 +1471,26 @@ const setupDropzone = () => {
     dom.editCameraInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0], 'edit'));
 };
 
-const handleFileSelection = (file, mode = 'add') => {
+const handleFileSelection = (file, context = 'add') => {
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showToast(state.currentLang === 'vi' ? 'Kích thước ảnh vượt quá 5MB.' : 'File exceeds 5MB limit.', 'error');
+    if (!file.type.startsWith('image/')) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng chọn tập tin hình ảnh (JPG, PNG, WebP)!' : 'Please select a valid image file!', 'error');
         return;
     }
 
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-        showToast(state.currentLang === 'vi' ? 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.' : 'Only JPG, PNG, or WebP allowed.', 'error');
+    if (file.size > 5 * 1024 * 1024) {
+        showToast(state.currentLang === 'vi' ? 'Kích thước ảnh tối đa 5MB!' : 'Image size cannot exceed 5MB!', 'error');
         return;
     }
 
     const objectUrl = URL.createObjectURL(file);
 
-    if (mode === 'add') {
+    if (context === 'add') {
         addSelectedFile = file;
         dom.addPreviewImg.src = objectUrl;
-        dom.addDropzoneContent.classList.add('hidden');
         dom.addPreviewContainer.classList.remove('hidden');
+        dom.addDropzoneContent.classList.add('hidden');
         dom.addImageUrlInput.value = '';
     } else {
         editSelectedFile = file;
@@ -1089,6 +1505,12 @@ const handleFileSelection = (file, mode = 'add') => {
 const handleAddModelSubmit = async (e) => {
     e.preventDefault();
 
+    if (!state.currentUser) {
+        showToast(i18n[state.currentLang].requireLoginToAdd, 'error');
+        openAuthModal('login');
+        return;
+    }
+
     const name = dom.addNameInput.value.trim();
     if (!name) {
         showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên mô hình!' : 'Please enter model name!', 'error');
@@ -1099,10 +1521,23 @@ const handleAddModelSubmit = async (e) => {
     dom.submitAddBtn.disabled = true;
     dom.submitAddBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
 
+    let category = dom.addCategorySelect.value;
+    if (category === '__custom__') {
+        category = dom.addCustomCategoryInput.value.trim();
+        if (!category) {
+            showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên danh mục tùy chỉnh!' : 'Please enter custom category name!', 'error');
+            dom.addCustomCategoryInput.focus();
+            dom.submitAddBtn.disabled = false;
+            const dict = i18n[state.currentLang] || i18n.vi;
+            dom.submitAddBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${dict.btnSaveModel}`;
+            return;
+        }
+    }
+
     try {
         const formData = new FormData();
         formData.append('name', name);
-        formData.append('category', dom.addCategorySelect.value);
+        formData.append('category', category);
         formData.append('brand', dom.addBrandInput.value.trim());
         formData.append('scale', dom.addScaleInput.value.trim());
         if (dom.addPriceInput.value) formData.append('price', dom.addPriceInput.value);
@@ -1115,8 +1550,13 @@ const handleAddModelSubmit = async (e) => {
             formData.append('image_url', dom.addImageUrlInput.value.trim());
         }
 
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
         const res = await fetch(`${API_BASE}/api/models`, {
             method: 'POST',
+            credentials: 'include',
+            headers: headers,
             body: formData
         });
 
@@ -1125,11 +1565,10 @@ const handleAddModelSubmit = async (e) => {
 
         showToast(state.currentLang === 'vi' ? 'Đã thêm mô hình mới vào garage thành công!' : 'Model successfully added!', 'success');
 
-        // Reset form
         dom.addModelForm.reset();
+        dom.addCustomCategoryWrap.classList.add('hidden');
+        dom.addCustomCategoryInput.value = '';
         dom.removeAddImgBtn.click();
-
-        // Switch to collection view and refresh
         navigateTo('collection');
 
     } catch (err) {
@@ -1143,19 +1582,20 @@ const handleAddModelSubmit = async (e) => {
 };
 
 // ============================================================================
-// MODEL DETAILS MODAL (VIEW 4)
+// MODEL DETAILS MODAL
 // ============================================================================
 const openModelDetails = async (modelId) => {
     state.selectedModelId = modelId;
 
     try {
-        const res = await fetch(`${API_BASE}/api/models/${modelId}`);
+        const res = await fetch(`${API_BASE}/api/models/${modelId}`, {
+            credentials: 'include'
+        });
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
         const item = json.data;
 
-        // Populate detail modal fields
         dom.detailModelTitle.textContent = item.name;
         dom.detailCategoryBadge.textContent = item.category;
         dom.detailCategoryBadge.className = `badge badge-${item.category.toLowerCase()}`;
@@ -1165,9 +1605,29 @@ const openModelDetails = async (modelId) => {
         dom.detailPrice.textContent = formatCurrency(item.price);
         dom.detailPurchaseDate.textContent = formatDate(item.purchase_date);
         dom.detailCreatedAt.textContent = formatDate(item.created_at);
-        dom.detailDescription.textContent = item.description || (state.currentLang === 'vi' ? 'Chưa có ghi chú mô tả nào.' : 'No notes available.');
+        dom.detailDescription.textContent = item.description || (state.currentLang === 'vi' ? 'Chưa cập nhật' : 'Not updated');
 
-        // Show modal
+        // Ownership authorization check
+        const isOwner = Boolean(
+            item.is_owner || 
+            (state.currentUser && (
+                (item.owner_id && state.currentUser.id === item.owner_id) ||
+                (item.owner_name && (state.currentUser.username === item.owner_name || state.currentUser.display_name === item.owner_name))
+            ))
+        );
+
+        if (isOwner) {
+            dom.detailDeleteBtn.classList.remove('hidden');
+            dom.detailEditBtn.classList.remove('hidden');
+            dom.detailDeleteBtn.style.display = 'inline-flex';
+            dom.detailEditBtn.style.display = 'inline-flex';
+        } else {
+            dom.detailDeleteBtn.classList.add('hidden');
+            dom.detailEditBtn.classList.add('hidden');
+            dom.detailDeleteBtn.style.display = 'none';
+            dom.detailEditBtn.style.display = 'none';
+        }
+
         dom.detailsModal.classList.add('show');
     } catch (err) {
         console.error('Lỗi khi mở chi tiết:', err);
@@ -1187,38 +1647,69 @@ const openEditModal = async () => {
     if (!modelId) return;
 
     try {
-        const res = await fetch(`${API_BASE}/api/models/${modelId}`);
+        const res = await fetch(`${API_BASE}/api/models/${modelId}`, {
+            credentials: 'include'
+        });
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
         const item = json.data;
+        const isOwner = Boolean(
+            item.is_owner || 
+            (state.currentUser && (
+                (item.owner_id && state.currentUser.id === item.owner_id) ||
+                (item.owner_name && (state.currentUser.username === item.owner_name || state.currentUser.display_name === item.owner_name))
+            ))
+        );
 
-        // Populate edit form fields
+        if (!isOwner) {
+            showToast(state.currentLang === 'vi' ? 'Bạn không có quyền chỉnh sửa mô hình này!' : 'Unauthorized!', 'error');
+            return;
+        }
+
         dom.editModelId.value = item.id;
         dom.editNameInput.value = item.name || '';
-        dom.editCategorySelect.value = item.category || 'Car';
+
+        const cat = item.category || 'Car';
+        let opt = dom.editCategorySelect.querySelector(`option[value="${cat}"]`);
+        if (!opt) {
+            const customOpt = dom.editCategorySelect.querySelector('option[value="__custom__"]');
+            opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            if (customOpt) {
+                dom.editCategorySelect.insertBefore(opt, customOpt);
+            } else {
+                dom.editCategorySelect.appendChild(opt);
+            }
+        }
+        dom.editCategorySelect.value = cat;
+        dom.editCustomCategoryWrap.classList.add('hidden');
+        dom.editCustomCategoryInput.value = '';
+
         dom.editBrandInput.value = item.brand || '';
         dom.editScaleInput.value = item.scale || '';
         dom.editPriceInput.value = item.price !== null ? item.price : '';
         dom.editPurchaseDateInput.value = item.purchase_date || '';
         dom.editDescriptionInput.value = item.description || '';
-        dom.editImageUrlInput.value = (item.image_url && !item.image_url.startsWith('/uploads/')) ? item.image_url : '';
-
-        // Reset selected file & show current preview
-        editSelectedFile = null;
+        dom.editImageUrlInput.value = item.image_url && !item.image_url.startsWith('/uploads/') ? item.image_url : '';
         dom.editPreviewImg.src = sanitizeImageUrl(item.image_url);
 
-        // Hide details modal, open edit modal
+        editSelectedFile = null;
+
         closeDetailsModal();
         dom.editModal.classList.add('show');
-
     } catch (err) {
-        console.error('Lỗi khi mở form sửa:', err);
+        console.error('Lỗi mở form sửa:', err);
+        showToast('Error loading model for editing', 'error');
     }
 };
 
 const closeEditModal = () => {
     dom.editModal.classList.remove('show');
+    if (state.selectedModelId) {
+        dom.detailsModal.classList.add('show');
+    }
 };
 
 const handleEditModelSubmit = async (e) => {
@@ -1228,19 +1719,34 @@ const handleEditModelSubmit = async (e) => {
     const name = dom.editNameInput.value.trim();
 
     if (!name) {
-        showToast(state.currentLang === 'vi' ? 'Tên mô hình không được để trống!' : 'Model name cannot be empty!', 'error');
-        dom.editNameInput.focus();
+        showToast(state.currentLang === 'vi' ? 'Tên mô hình không được để trống!' : 'Model name is required!', 'error');
         return;
+    }
+
+    dom.submitEditBtn.disabled = true;
+    dom.submitEditBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
+
+    let category = dom.editCategorySelect.value;
+    if (category === '__custom__') {
+        category = dom.editCustomCategoryInput.value.trim();
+        if (!category) {
+            showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên danh mục tùy chỉnh!' : 'Please enter custom category name!', 'error');
+            dom.editCustomCategoryInput.focus();
+            dom.submitEditBtn.disabled = false;
+            const dict = i18n[state.currentLang] || i18n.vi;
+            dom.submitEditBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${dict.btnSaveChange}`;
+            return;
+        }
     }
 
     try {
         const formData = new FormData();
         formData.append('name', name);
-        formData.append('category', dom.editCategorySelect.value);
+        formData.append('category', category);
         formData.append('brand', dom.editBrandInput.value.trim());
         formData.append('scale', dom.editScaleInput.value.trim());
-        formData.append('price', dom.editPriceInput.value || '');
-        formData.append('purchase_date', dom.editPurchaseDateInput.value || '');
+        if (dom.editPriceInput.value) formData.append('price', dom.editPriceInput.value);
+        if (dom.editPurchaseDateInput.value) formData.append('purchase_date', dom.editPurchaseDateInput.value);
         formData.append('description', dom.editDescriptionInput.value.trim());
 
         if (editSelectedFile) {
@@ -1249,85 +1755,467 @@ const handleEditModelSubmit = async (e) => {
             formData.append('image_url', dom.editImageUrlInput.value.trim());
         }
 
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
         const res = await fetch(`${API_BASE}/api/models/${modelId}`, {
             method: 'PUT',
+            credentials: 'include',
+            headers: headers,
             body: formData
         });
 
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        showToast(state.currentLang === 'vi' ? 'Cập nhật mô hình thành công!' : 'Model updated successfully!', 'success');
-        closeEditModal();
+        showToast(state.currentLang === 'vi' ? 'Cập nhật thông tin mô hình thành công!' : 'Model updated successfully!', 'success');
 
-        // Refresh views
-        if (state.currentView === 'dashboard') loadDashboardStats();
-        if (state.currentView === 'collection') loadModels();
-
-        // Re-open updated details
+        dom.editModal.classList.remove('show');
+        loadModels();
+        loadDashboardStats();
         openModelDetails(modelId);
 
     } catch (err) {
         console.error('Lỗi khi cập nhật mô hình:', err);
-        showToast(err.message || 'Update failed', 'error');
+        showToast(err.message || 'Error updating model', 'error');
+    } finally {
+        dom.submitEditBtn.disabled = false;
+        const dict = i18n[state.currentLang] || i18n.vi;
+        dom.submitEditBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${dict.btnSaveChange}`;
     }
 };
 
 // ============================================================================
-// DELETE MODEL CONFIRMATION
+// DELETE MODEL CONFIRMATION MODAL
 // ============================================================================
 const openDeleteConfirmModal = () => {
-    const item = state.models.find(m => m.id === state.selectedModelId);
-    dom.deleteTargetName.textContent = item ? `"${item.name}"` : 'this model';
+    const model = state.models.find(m => m.id === state.selectedModelId);
+    if (!model) return;
+
+    dom.deleteTargetName.textContent = `"${model.name}"`;
+    closeDetailsModal();
     dom.deleteConfirmModal.classList.add('show');
 };
 
 const closeDeleteConfirmModal = () => {
     dom.deleteConfirmModal.classList.remove('show');
+    if (state.selectedModelId) {
+        dom.detailsModal.classList.add('show');
+    }
 };
 
 const handleConfirmDelete = async () => {
     const modelId = state.selectedModelId;
     if (!modelId) return;
 
+    dom.confirmDeleteActionBtn.disabled = true;
+    dom.confirmDeleteActionBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
+
     try {
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
         const res = await fetch(`${API_BASE}/api/models/${modelId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include',
+            headers: headers
         });
+
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
 
-        showToast(json.message || (state.currentLang === 'vi' ? 'Đã xóa mô hình khỏi garage' : 'Model deleted'), 'success');
-        closeDeleteConfirmModal();
-        closeDetailsModal();
+        showToast(json.message || 'Model deleted', 'success');
 
-        loadDashboardStats();
+        dom.deleteConfirmModal.classList.remove('show');
+        state.selectedModelId = null;
         loadModels();
+        loadDashboardStats();
 
     } catch (err) {
         console.error('Lỗi khi xóa mô hình:', err);
-        showToast(err.message || 'Delete failed', 'error');
+        showToast(err.message || 'Error deleting model', 'error');
+    } finally {
+        dom.confirmDeleteActionBtn.disabled = false;
+        const dict = i18n[state.currentLang] || i18n.vi;
+        dom.confirmDeleteActionBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> ${dict.btnDeletePermanent}`;
     }
 };
 
 // ============================================================================
-// SEARCH & FILTER EVENTS
+// CUSTOM COLLECTIONS (THƯ VIỆN BỘ SƯU TẬP TÙY CHỈNH)
+// ============================================================================
+const loadCollections = async (tab = state.activeColTab) => {
+    state.activeColTab = tab;
+
+    if (tab === 'my') {
+        dom.tabMyCols.classList.add('active');
+        dom.tabPublicCols.classList.remove('active');
+
+        if (!state.currentUser) {
+            dom.collectionsGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: var(--bg-surface); border-radius: var(--radius-md);">
+                    <i class="fa-solid fa-lock" style="font-size: 2rem; color: var(--color-primary); margin-bottom: 12px;"></i>
+                    <h3 style="margin-bottom: 8px;">${state.currentLang === 'vi' ? 'Vui lòng đăng nhập để xem thư viện cá nhân' : 'Please sign in to view your libraries'}</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 16px;">${state.currentLang === 'vi' ? 'Tạo và quản lý các bộ sưu tập riêng tư theo chủ đề bạn yêu thích.' : 'Curate and manage your own private themed libraries.'}</p>
+                    <button class="btn btn-primary" onclick="openAuthModal('login')">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> ${i18n[state.currentLang].login}
+                    </button>
+                </div>
+            `;
+            dom.collectionsEmptyState.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/api/collections`, {
+                credentials: 'include'
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.message);
+
+            state.collections = json.data;
+            renderCollectionsGrid(state.collections);
+        } catch (err) {
+            console.error('Lỗi khi tải thư viện cá nhân:', err);
+        }
+    } else {
+        dom.tabPublicCols.classList.add('active');
+        dom.tabMyCols.classList.remove('active');
+
+        try {
+            const res = await fetch(`${API_BASE}/api/public/collections`, {
+                credentials: 'include'
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.message);
+
+            state.collections = json.data;
+            renderCollectionsGrid(state.collections);
+        } catch (err) {
+            console.error('Lỗi khi tải thư viện công khai:', err);
+        }
+    }
+};
+
+const renderCollectionsGrid = (cols) => {
+    if (!cols || cols.length === 0) {
+        dom.collectionsGrid.innerHTML = '';
+        dom.collectionsEmptyState.classList.remove('hidden');
+        return;
+    }
+
+    dom.collectionsEmptyState.classList.add('hidden');
+
+    dom.collectionsGrid.innerHTML = cols.map(col => {
+        const cover = col.cover_image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80';
+        const isPriv = col.visibility === 'private';
+        const badgeClass = isPriv ? 'badge-private' : 'badge-public';
+        const badgeIcon = isPriv ? 'fa-lock' : 'fa-globe';
+        const badgeText = isPriv 
+            ? (state.currentLang === 'vi' ? 'Riêng tư' : 'Private') 
+            : (state.currentLang === 'vi' ? 'Công khai' : 'Public');
+
+        return `
+            <div class="collection-card" data-col-id="${col.id}">
+                <div class="collection-cover" style="background-image: url('${cover}');">
+                    <div class="collection-cover-overlay"></div>
+                    <div class="collection-badge-wrap">
+                        <span class="badge-privacy ${badgeClass}">
+                            <i class="fa-solid ${badgeIcon}"></i> ${badgeText}
+                        </span>
+                    </div>
+                </div>
+                <div class="collection-body">
+                    <h3 class="collection-title">${col.name}</h3>
+                    <p class="collection-desc">${col.description || (state.currentLang === 'vi' ? 'Chưa có mô tả' : 'No description')}</p>
+                    <div class="collection-footer">
+                        <span><i class="fa-solid fa-shapes"></i> ${col.model_count} ${i18n[state.currentLang].unitModels}</span>
+                        <span><i class="fa-solid fa-user"></i> ${col.owner_name || 'Collector'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    dom.collectionsGrid.querySelectorAll('.collection-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const colId = parseInt(card.getAttribute('data-col-id'), 10);
+            openCollectionDetails(colId);
+        });
+    });
+};
+
+const openCreateCollectionModal = () => {
+    if (!state.currentUser) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng đăng nhập để tạo thư viện!' : 'Please sign in to create libraries!', 'error');
+        openAuthModal('login');
+        return;
+    }
+    dom.createColForm.reset();
+    dom.colVisibilitySelect.value = 'private'; // Strictly defaults to private as requested!
+    dom.createCollectionModal.classList.add('show');
+    dom.colNameInput.focus();
+};
+
+const closeCreateCollectionModal = () => {
+    dom.createCollectionModal.classList.remove('show');
+};
+
+const handleCreateCollectionSubmit = async (e) => {
+    e.preventDefault();
+
+    const name = dom.colNameInput.value.trim();
+    if (!name) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên thư viện!' : 'Please enter library name!', 'error');
+        return;
+    }
+
+    const description = dom.colDescInput.value.trim();
+    const cover_image_url = dom.colCoverInput.value.trim();
+    const visibility = dom.colVisibilitySelect.value || 'private';
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/collections`, {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify({ name, description, cover_image_url, visibility })
+        });
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        showToast(json.message, 'success');
+        closeCreateCollectionModal();
+        loadCollections('my');
+
+    } catch (err) {
+        console.error('Lỗi tạo thư viện:', err);
+        showToast(err.message || 'Error creating library', 'error');
+    }
+};
+
+const openCollectionDetails = async (colId) => {
+    state.selectedColId = colId;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/collections/${colId}`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        const col = json.data;
+
+        dom.colDetailTitle.textContent = col.name;
+        dom.colDetailDesc.textContent = col.description || (state.currentLang === 'vi' ? 'Chưa có mô tả cho thư viện này.' : 'No description.');
+        dom.colDetailCount.textContent = (col.models || []).length;
+
+        const isPriv = col.visibility === 'private';
+        dom.colDetailVisibilityBadge.className = `badge-privacy ${isPriv ? 'badge-private' : 'badge-public'}`;
+        dom.colDetailVisibilityBadge.innerHTML = `<i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i> ${isPriv ? (state.currentLang === 'vi' ? 'Riêng tư' : 'Private') : (state.currentLang === 'vi' ? 'Công khai' : 'Public')}`;
+
+        if (col.is_owner) {
+            dom.colOwnerActions.classList.remove('hidden');
+        } else {
+            dom.colOwnerActions.classList.add('hidden');
+        }
+
+        // Render models inside this collection
+        if (!col.models || col.models.length === 0) {
+            dom.colModelsGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); padding: 30px;">
+                    ${state.currentLang === 'vi' ? 'Thư viện này chưa có mô hình nào.' : 'No models in this library yet.'}
+                </div>
+            `;
+        } else {
+            dom.colModelsGrid.innerHTML = col.models.map(m => {
+                const catClass = (m.category || 'other').toLowerCase();
+                const iconClass = getCategoryIcon(m.category);
+
+                return `
+                    <div class="model-card" style="margin-bottom: 0;">
+                        <div class="card-img-wrap" style="height: 140px;">
+                            <img class="card-img" src="${sanitizeImageUrl(m.image_url)}" alt="${m.name}">
+                            <div class="card-corner-tag card-corner-${catClass}"><i class="fa-solid ${iconClass}"></i></div>
+                        </div>
+                        <div class="card-content" style="padding: 12px;">
+                            <span class="card-brand">${m.brand || '—'}</span>
+                            <h4 class="card-model-name" style="font-size: 0.95rem;">${m.name}</h4>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span class="card-price-value">${formatCurrency(m.price)}</span>
+                                ${col.is_owner ? `
+                                    <button class="btn btn-danger-outline btn-sm remove-from-col-btn" data-model-id="${m.id}" title="Gỡ khỏi thư viện">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Bind remove buttons
+            dom.colModelsGrid.querySelectorAll('.remove-from-col-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const mId = btn.getAttribute('data-model-id');
+                    await removeModelFromCollection(col.id, mId);
+                });
+            });
+        }
+
+        dom.colDetailModal.classList.add('show');
+    } catch (err) {
+        console.error('Lỗi mở chi tiết thư viện:', err);
+        showToast(err.message || 'Cannot access private library', 'error');
+    }
+};
+
+const closeCollectionDetails = () => {
+    dom.colDetailModal.classList.remove('show');
+};
+
+const removeModelFromCollection = async (colId, modelId) => {
+    try {
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/collections/${colId}/models/${modelId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: headers
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        showToast(json.message, 'success');
+        openCollectionDetails(colId);
+        loadCollections();
+    } catch (err) {
+        showToast(err.message || 'Error removing model', 'error');
+    }
+};
+
+const handleDeleteCollection = async () => {
+    const colId = state.selectedColId;
+    if (!colId) return;
+
+    if (!confirm(state.currentLang === 'vi' ? 'Bạn có chắc chắn muốn xóa thư viện này?' : 'Delete this library?')) {
+        return;
+    }
+
+    try {
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/collections/${colId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: headers
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        showToast(json.message, 'success');
+        closeCollectionDetails();
+        loadCollections('my');
+    } catch (err) {
+        showToast(err.message || 'Error deleting library', 'error');
+    }
+};
+
+// Add Model To Collection Dialog
+const openAddToCollectionModal = async () => {
+    if (!state.currentUser) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng đăng nhập để dùng tính năng này!' : 'Please sign in!', 'error');
+        openAuthModal('login');
+        return;
+    }
+
+    const modelId = state.selectedModelId;
+    const model = state.models.find(m => m.id === modelId);
+    if (!model) return;
+
+    state.selectedModelForCol = modelId;
+    dom.targetModelNameForCol.textContent = model.name;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/collections`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        if (!json.data || json.data.length === 0) {
+            showToast(state.currentLang === 'vi' ? 'Bạn chưa có thư viện nào. Hãy tạo thư viện trước!' : 'Please create a library first!', 'info');
+            navigateTo('libraries');
+            closeDetailsModal();
+            openCreateCollectionModal();
+            return;
+        }
+
+        dom.selectUserCol.innerHTML = json.data.map(c => `
+            <option value="${c.id}">${c.name} (${c.visibility === 'private' ? '🔒 Riêng tư' : '🌍 Công khai'})</option>
+        `).join('');
+
+        dom.addToColModal.classList.add('show');
+    } catch (err) {
+        showToast('Error loading collections', 'error');
+    }
+};
+
+const closeAddToCollectionModal = () => {
+    dom.addToColModal.classList.remove('show');
+};
+
+const handleConfirmAddToCol = async () => {
+    const colId = dom.selectUserCol.value;
+    const modelId = state.selectedModelForCol;
+
+    if (!colId || !modelId) return;
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/collections/${colId}/models`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: headers,
+            body: JSON.stringify({ model_id: modelId })
+        });
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        showToast(json.message || 'Added to collection!', 'success');
+        closeAddToCollectionModal();
+    } catch (err) {
+        showToast(err.message || 'Error adding to collection', 'error');
+    }
+};
+
+// ============================================================================
+// FILTER & SEARCH LOGIC
 // ============================================================================
 const setupFilterEvents = () => {
-    let debounceTimer;
-
-    // Search Input
+    let debounceTimer = null;
     dom.searchInput.addEventListener('input', (e) => {
-        state.searchQuery = e.target.value.trim();
-        dom.clearSearchBtn.style.display = state.searchQuery ? 'block' : 'none';
-
         clearTimeout(debounceTimer);
+        const query = e.target.value.trim();
+        state.searchQuery = query;
+
+        dom.clearSearchBtn.style.display = query ? 'flex' : 'none';
+
         debounceTimer = setTimeout(() => {
             loadModels();
         }, 300);
     });
 
-    // Clear Search Button
     dom.clearSearchBtn.addEventListener('click', () => {
         dom.searchInput.value = '';
         state.searchQuery = '';
@@ -1335,29 +2223,36 @@ const setupFilterEvents = () => {
         loadModels();
     });
 
-    // Category Filter Pills
-    dom.categoryPills.forEach(pill => {
-        pill.addEventListener('click', () => {
-            dom.categoryPills.forEach(p => p.classList.remove('active'));
+    if (dom.categoryPillsContainer) {
+        dom.categoryPillsContainer.addEventListener('click', (e) => {
+            const pill = e.target.closest('.pill-btn');
+            if (!pill) return;
+            dom.categoryPillsContainer.querySelectorAll('.pill-btn').forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
             state.activeCategory = pill.getAttribute('data-category');
             loadModels();
         });
-    });
+    } else {
+        dom.categoryPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                dom.categoryPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                state.activeCategory = pill.getAttribute('data-category');
+                loadModels();
+            });
+        });
+    }
 
-    // Brand Select
     dom.brandFilterSelect.addEventListener('change', (e) => {
         state.selectedBrand = e.target.value;
         loadModels();
     });
 
-    // Sort Select
     dom.sortSelect.addEventListener('change', (e) => {
         state.sortBy = e.target.value;
         loadModels();
     });
 
-    // Reset Filters
     dom.resetFiltersBtn.addEventListener('click', () => {
         dom.searchInput.value = '';
         state.searchQuery = '';
@@ -1381,7 +2276,7 @@ const setupFilterEvents = () => {
 // GLOBAL EVENT LISTENERS INITIALIZATION
 // ============================================================================
 const initEventListeners = () => {
-    // Language Switcher Events (Yêu cầu 2)
+    // Language Switcher Events
     if (dom.langToggleBtn) dom.langToggleBtn.addEventListener('click', toggleLanguage);
     if (dom.mobileLangToggleBtn) dom.mobileLangToggleBtn.addEventListener('click', toggleLanguage);
 
@@ -1394,12 +2289,40 @@ const initEventListeners = () => {
         });
     });
 
+    // Theme Switchers
+    if (dom.themeToggleBtn) dom.themeToggleBtn.addEventListener('click', toggleTheme);
+    if (dom.mobileThemeToggleBtn) dom.mobileThemeToggleBtn.addEventListener('click', toggleTheme);
+
+    // Custom Category Input Toggles
+    if (dom.addCategorySelect) {
+        dom.addCategorySelect.addEventListener('change', (e) => {
+            if (e.target.value === '__custom__') {
+                dom.addCustomCategoryWrap.classList.remove('hidden');
+                dom.addCustomCategoryInput.focus();
+            } else {
+                dom.addCustomCategoryWrap.classList.add('hidden');
+            }
+        });
+    }
+
+    if (dom.editCategorySelect) {
+        dom.editCategorySelect.addEventListener('change', (e) => {
+            if (e.target.value === '__custom__') {
+                dom.editCustomCategoryWrap.classList.remove('hidden');
+                dom.editCustomCategoryInput.focus();
+            } else {
+                dom.editCustomCategoryWrap.classList.add('hidden');
+            }
+        });
+    }
+
     // Top action buttons
     dom.refreshDataBtn.addEventListener('click', () => {
         const dict = i18n[state.currentLang] || i18n.vi;
         showToast(dict.toastRefreshing, 'info');
         loadDashboardStats();
         if (state.currentView === 'collection') loadModels();
+        if (state.currentView === 'libraries') loadCollections();
         checkSystemReadiness();
     });
 
@@ -1412,35 +2335,42 @@ const initEventListeners = () => {
     });
 
     // Auth & Login UI
-    if (dom.topUserProfile) dom.topUserProfile.addEventListener('click', openLoginModal);
-    if (dom.topLoginBtn) dom.topLoginBtn.addEventListener('click', openLoginModal);
-    if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.addEventListener('click', openLoginModal);
-    if (dom.quickLoginMobileBtn) dom.quickLoginMobileBtn.addEventListener('click', openLoginModal);
+    if (dom.topUserProfile) dom.topUserProfile.addEventListener('click', () => openAuthModal('login'));
+    if (dom.topLoginBtn) dom.topLoginBtn.addEventListener('click', () => openAuthModal('login'));
+    if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.addEventListener('click', () => openAuthModal('login'));
+    if (dom.quickLoginMobileBtn) dom.quickLoginMobileBtn.addEventListener('click', () => openAuthModal('login'));
     if (dom.sidebarLogoutBtn) dom.sidebarLogoutBtn.addEventListener('click', handleLogout);
 
-    // Login Form
-    dom.loginForm.addEventListener('submit', handleLoginSubmit);
-    dom.closeLoginModalBtn.addEventListener('click', closeLoginModal);
+    // Tab Switching in Auth Modal
+    if (dom.authTabLogin) dom.authTabLogin.addEventListener('click', () => switchAuthTab('login'));
+    if (dom.authTabRegister) dom.authTabRegister.addEventListener('click', () => switchAuthTab('register'));
+    if (dom.switchToRegisterLink) dom.switchToRegisterLink.addEventListener('click', () => switchAuthTab('register'));
+    if (dom.switchToLoginLink) dom.switchToLoginLink.addEventListener('click', () => switchAuthTab('login'));
+
+    // Forms in Auth Modal
+    if (dom.loginForm) dom.loginForm.addEventListener('submit', handleLoginSubmit);
+    if (dom.registerForm) dom.registerForm.addEventListener('submit', handleRegisterSubmit);
+    if (dom.closeLoginModalBtn) dom.closeLoginModalBtn.addEventListener('click', closeAuthModal);
+    if (dom.closeRegisterModalBtn) dom.closeRegisterModalBtn.addEventListener('click', closeAuthModal);
 
     // Toggle Password Visibility
-    dom.toggleLoginPasswordBtn.addEventListener('click', () => {
-        const isPassword = dom.loginPassword.type === 'password';
-        dom.loginPassword.type = isPassword ? 'text' : 'password';
-        dom.toggleLoginPasswordBtn.innerHTML = isPassword 
-            ? '<i class="fa-regular fa-eye-slash"></i>' 
-            : '<i class="fa-regular fa-eye"></i>';
-    });
+    if (dom.toggleLoginPasswordBtn) {
+        dom.toggleLoginPasswordBtn.addEventListener('click', () => {
+            const isPassword = dom.loginPassword.type === 'password';
+            dom.loginPassword.type = isPassword ? 'text' : 'password';
+            dom.toggleLoginPasswordBtn.innerHTML = isPassword 
+                ? '<i class="fa-regular fa-eye-slash"></i>' 
+                : '<i class="fa-regular fa-eye"></i>';
+        });
+    }
 
-    // Quick Fill Demo Credentials
-    dom.quickFillDemoBtn.addEventListener('click', () => {
-        dom.loginUsername.value = 'admin';
-        dom.loginPassword.value = 'garage2026';
-        showToast(state.currentLang === 'vi' ? 'Đã điền thông tin tài khoản mẫu!' : 'Filled demo credentials!', 'info');
-    });
-
-    if (dom.forgotPasswordLink) {
-        dom.forgotPasswordLink.addEventListener('click', () => {
-            showToast('Demo Account: admin / garage2026', 'info');
+    if (dom.toggleRegPasswordBtn) {
+        dom.toggleRegPasswordBtn.addEventListener('click', () => {
+            const isPassword = dom.regPassword.type === 'password';
+            dom.regPassword.type = isPassword ? 'text' : 'password';
+            dom.toggleRegPasswordBtn.innerHTML = isPassword 
+                ? '<i class="fa-regular fa-eye-slash"></i>' 
+                : '<i class="fa-regular fa-eye"></i>';
         });
     }
 
@@ -1460,6 +2390,7 @@ const initEventListeners = () => {
     dom.detailCloseBtn.addEventListener('click', closeDetailsModal);
     dom.detailEditBtn.addEventListener('click', openEditModal);
     dom.detailDeleteBtn.addEventListener('click', openDeleteConfirmModal);
+    dom.detailAddToColBtn.addEventListener('click', openAddToCollectionModal);
 
     // Edit Modal
     dom.closeEditModalBtn.addEventListener('click', closeEditModal);
@@ -1469,13 +2400,39 @@ const initEventListeners = () => {
     dom.cancelDeleteConfirmBtn.addEventListener('click', closeDeleteConfirmModal);
     dom.confirmDeleteActionBtn.addEventListener('click', handleConfirmDelete);
 
-    // Close modals on clicking outside
-    [dom.detailsModal, dom.editModal, dom.deleteConfirmModal, dom.loginModal].forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
-            }
-        });
+    // Custom Collections Listeners
+    if (dom.openCreateColBtn) dom.openCreateColBtn.addEventListener('click', openCreateCollectionModal);
+    if (dom.tabMyCols) dom.tabMyCols.addEventListener('click', () => loadCollections('my'));
+    if (dom.tabPublicCols) dom.tabPublicCols.addEventListener('click', () => loadCollections('public'));
+    if (dom.createColForm) dom.createColForm.addEventListener('submit', handleCreateCollectionSubmit);
+    if (dom.closeCreateColModalBtn) dom.closeCreateColModalBtn.addEventListener('click', closeCreateCollectionModal);
+    if (dom.cancelCreateColBtn) dom.cancelCreateColBtn.addEventListener('click', closeCreateCollectionModal);
+    if (dom.closeColDetailModalBtn) dom.closeColDetailModalBtn.addEventListener('click', closeCollectionDetails);
+    if (dom.closeColDetailBtn) dom.closeColDetailBtn.addEventListener('click', closeCollectionDetails);
+    if (dom.deleteColBtn) dom.deleteColBtn.addEventListener('click', handleDeleteCollection);
+
+    // Add To Collection Modal Listeners
+    if (dom.closeAddToColModalBtn) dom.closeAddToColModalBtn.addEventListener('click', closeAddToCollectionModal);
+    if (dom.cancelAddToColBtn) dom.cancelAddToColBtn.addEventListener('click', closeAddToCollectionModal);
+    if (dom.confirmAddToColBtn) dom.confirmAddToColBtn.addEventListener('click', handleConfirmAddToCol);
+
+    // Close modals on clicking backdrop
+    [
+        dom.detailsModal, 
+        dom.editModal, 
+        dom.deleteConfirmModal, 
+        dom.authModal,
+        dom.createCollectionModal,
+        dom.colDetailModal,
+        dom.addToColModal
+    ].forEach(modal => {
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        }
     });
 
     // Keyboard Shortcuts (Escape to close modals)
@@ -1484,7 +2441,10 @@ const initEventListeners = () => {
             closeDetailsModal();
             closeEditModal();
             closeDeleteConfirmModal();
-            closeLoginModal();
+            closeAuthModal();
+            closeCreateCollectionModal();
+            closeCollectionDetails();
+            closeAddToCollectionModal();
             closeMobileSidebar();
         }
     });
@@ -1499,10 +2459,14 @@ const initEventListeners = () => {
 // ============================================================================
 // APPLICATION BOOTSTRAP
 // ============================================================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    initTheme();
     initEventListeners();
     setLanguage(state.currentLang, false);
-    updateAuthUI();
+    await checkCurrentUser();
+    if (!state.currentUser) {
+        openAuthModal('login');
+    }
     checkSystemReadiness();
     loadDashboardStats();
     loadModels();

@@ -18,6 +18,17 @@ frontend/.env
 # Uploaded Files (keep directory)
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/uploads_backup/
+
+# Database Backups & Dumps
+*.sql
+!database/init.sql
+database/backup*
+
+# SSH & Secrets
+*.pem
+*.key
+*.cer
 
 # IDE / OS
 .vscode/

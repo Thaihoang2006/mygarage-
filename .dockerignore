@@ -1,0 +1,14 @@
+**/venv/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.env
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads_backup/
+database/*.sql
+.git/
+.vscode/
+tests/

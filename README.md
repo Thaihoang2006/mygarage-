@@ -1,106 +1,158 @@
 # MyGarage – Personal Model Collection Manager 🏎️🤖
 
-Ứng dụng web quản lý bộ sưu tập mô hình (Ô tô Die-cast, Gunpla/Gundam và các dòng mô hình sưu tầm khác) được thiết kế theo phong cách **Premium Automotive Dashboard** với Dark Mode và bảng màu sang trọng (Polo Burgundy, Saddle Tan, Racing Green).
+Ứng dụng web quản lý bộ sưu tập mô hình (Ô tô Die-cast, Gunpla/Gundam và các dòng mô hình sưu tầm khác) được thiết kế theo phong cách **Premium Automotive Dashboard** với Dark Mode và Vintage Theme (Polo Burgundy, Saddle Tan, Racing Green).
 
-Dự án được xây dựng phục vụ bài tập lớn môn **Triển khai ứng dụng web với Docker & Kubernetes**.
-
----
-
-## 1. Công nghệ sử dụng
-
-- **Frontend**: HTML5, CSS3, Pure JavaScript, Chart.js, FontAwesome (Không dùng React/Vue).
-- **Backend**: Python 3.12/3.14, Flask, Flask-SQLAlchemy, PyMySQL, Pillow, Gunicorn (Linux container).
-- **Database**: MySQL 8.x (`mygarage_db`).
-- **Container & Orchestration**: Docker, Docker Compose, Kubernetes (Kubeadm, Flannel/Calico CNI).
+Dự án được xây dựng phục vụ bài tập lớn môn **Triển khai ứng dụng web với Docker & Kubernetes (CKA 2026)**.
 
 ---
 
-## 2. Bảng màu chủ đạo (Luxury Racing Theme)
+## 1. Công nghệ sử dụng & Kiến trúc
 
-- **Polo Burgundy**: `#641E2A` – Điểm nhấn thương hiệu, nút chính, badge Gundam.
-- **Saddle Tan**: `#C9B99A` – Tông màu ánh kim ấm áp, viền card, số liệu quan trọng, chữ phụ nổi bật.
-- **Racing Green**: `#18352B` – Tông xanh xe đua cổ điển, badge Xe (Car), trạng thái hoạt động.
-- **Dark Green-Charcoal Surface**: `#0a1310` / `#13221c` – Nền giao diện tối dịu mắt, độ tương phản cao.
+- **Frontend**: HTML5, CSS3, Pure JavaScript, Chart.js, FontAwesome (phục vụ bằng Nginx Alpine Container làm Reverse Proxy).
+- **Backend**: Python 3.12/3.14, Flask REST API, Flask-SQLAlchemy, PyMySQL, Pillow, Gunicorn (Linux container).
+- **Database**: MySQL 8.0 (`mygarage_db`) hỗ trợ Persistent Volume Claim.
+- **Container & Registry**: Docker, Docker Compose, Docker Hub Registry (`nthoang06`).
+- **Orchestration**: Kubernetes v1.31 (Kubeadm, Flannel CNI, 1 Control Plane + 2 Worker Nodes trên AWS EC2).
+
+### Danh sách Docker Images trên Docker Hub:
+- Backend v1: `nthoang06/mygarage-backend:v1`
+- Frontend v1: `nthoang06/mygarage-frontend:v1`
+- Frontend v2: `nthoang06/mygarage-frontend:v2` (Phiên bản nâng cấp phục vụ thử nghiệm Rolling Update & Rollback)
 
 ---
 
-## 3. Cấu trúc thư mục
+## 2. Cấu trúc thư mục dự án
 
 ```text
 mygarage/
 ├── frontend/
-│   ├── index.html           # Giao diện chính (Dashboard, Collection, Add Model, Modals)
+│   ├── index.html           # Giao diện chính (Dashboard, Collection, Auth modal, Theme switch)
 │   ├── css/
-│   │   └── style.css        # CSS tùy biến giao diện Premium Automotive Dashboard
+│   │   └── style.css        # CSS tùy biến Dark Mode & Vintage Automotive Theme
 │   ├── js/
-│   │   └── app.js           # Xử lý sự kiện, REST API client, Charts, Camera & Upload
+│   │   └── app.js           # REST API client, Charts, Camera & Upload, Dynamic Filters
 │   ├── assets/              # Hình ảnh tĩnh, biểu tượng
 │   ├── nginx.conf           # Cấu hình Nginx reverse proxy /api và /uploads
 │   └── Dockerfile           # Nginx Alpine container
 │
 ├── backend/
-│   ├── app.py               # Flask REST API, routing, upload & image validation
-│   ├── models.py            # SQLAlchemy Model: ModelItem
+│   ├── app.py               # Flask REST API, routing, upload & image validation, auth
+│   ├── models.py            # SQLAlchemy Model: User, ModelItem, Collection
 │   ├── config.py            # Đọc cấu hình từ biến môi trường & .env
 │   ├── init_db.py           # Script khởi tạo database và nạp dữ liệu mẫu
 │   ├── requirements.txt     # Danh sách thư viện Python
-│   ├── uploads/             # Thư mục lưu trữ hình ảnh tải lên cục bộ
-│   ├── Dockerfile           # Python 3.12 Slim + Gunicorn container
-│   ├── .env.example         # Mẫu cấu hình môi trường
-│   └── .env                 # File biến môi trường bảo mật (không commit lên Git)
+│   ├── uploads/             # Thư mục lưu trữ hình ảnh tải lên
+│   └── Dockerfile           # Python 3.12 Slim + Gunicorn container
 │
 ├── database/
-│   └── init.sql             # SQL Script tạo bảng models và dữ liệu mẫu ban đầu
+│   └── init.sql             # SQL Script tạo database, bảng và dữ liệu mẫu khởi tạo
 │
-├── kubernetes/
-│   └── README.md            # Tài liệu kiến trúc cụm K8s 3-node
+├── kubernetes/              # Các manifest YAML triển khai cụm K8s
+│   ├── 00-namespace.yaml    # Namespace: mygarage
+│   ├── 01-secret-configmap.yaml # ConfigMap & Secret (DB credentials, Flask env)
+│   ├── 02-storage.yaml      # PersistentVolume & PersistentVolumeClaim (MySQL & Uploads)
+│   ├── 03-mysql.yaml        # Deployment & ClusterIP Service cho MySQL 8.0
+│   ├── 04-backend.yaml      # Deployment (2 replicas, podAntiAffinity) & ClusterIP Service
+│   └── 05-frontend.yaml     # Deployment (2 replicas, podAntiAffinity) & NodePort Service (30080)
 │
-├── docker-compose.yml       # Cấu hình khởi chạy trọn bộ 3 container cục bộ
-├── .gitignore               # Loại bỏ các file nhạy cảm và tạm (.env, venv, uploads)
-└── README.md                # Tài liệu hướng dẫn dự án
+├── tests/
+│   └── test_api.py          # Bộ kiểm thử tự động API (7/7 tests pass)
+│
+├── docker-compose.yml       # Khởi chạy trọn bộ 3 dịch vụ cục bộ
+├── .dockerignore
+├── .gitignore
+└── README.md                # Hướng dẫn chi tiết dự án
 ```
 
 ---
 
-## 4. Hướng dẫn khởi chạy cục bộ (Giai đoạn 1)
+## 3. Hướng dẫn chạy bằng Docker Compose (Cục bộ)
 
-### Bước 1: Cấu hình kết nối MySQL trong `backend/.env`
-Tạo file `backend/.env` (sao chép từ `backend/.env.example`):
-```env
-FLASK_ENV=development
-SECRET_KEY=mygarage-dev-secret-key-2026
-PORT=5000
+Khởi động toàn bộ hệ thống gồm 3 container (MySQL, Backend, Frontend) chỉ với 1 câu lệnh:
 
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=MẬT_KHẨU_MYSQL_CỦA_BẠN
-DB_NAME=mygarage_db
-
-UPLOAD_FOLDER=uploads
-MAX_CONTENT_LENGTH=5242880
-ALLOWED_EXTENSIONS=jpg,jpeg,png,webp
-```
-
-### Bước 2: Khởi tạo cơ sở dữ liệu `mygarage_db`
-Chạy script tự động tạo database, bảng và nạp 6 mẫu xe & mô hình ban đầu:
 ```bash
-cd backend
-python init_db.py
+docker compose up -d --build
 ```
-*(Hoặc import trực tiếp file `database/init.sql` thông qua MySQL Workbench).*
 
-### Bước 3: Chạy Backend Flask
+- Mở trình duyệt truy cập: `http://localhost` (hoặc `http://localhost:80`)
+- Dữ liệu và hình ảnh tải lên được lưu bền vững qua Docker Volumes (`mysql_data`, `uploads_data`).
+- Để dừng hệ thống:
 ```bash
-python app.py
+docker compose down
 ```
-Máy chủ backend sẽ chạy tại: `http://127.0.0.1:5000`
 
-### Bước 4: Trải nghiệm Website
-- Truy cập trực tiếp trình duyệt tại: `http://127.0.0.1:5000` (Flask tự động phục vụ giao diện frontend).
-- Hoặc mở file `frontend/index.html` bằng trình duyệt hay Live Server.
-- Thử nghiệm các tính năng:
-  - 📊 Xem thống kê Dashboard và biểu đồ phân bố.
-  - 🔍 Tìm kiếm mô hình, lọc theo danh mục (Car, Gundam, Other), lọc theo Hãng, sắp xếp theo giá và ngày thêm.
-  - ➕ Thêm mô hình mới: Chọn ảnh từ máy tính hoặc chụp từ camera điện thoại.
-  - 🖼️ Xem chi tiết mô hình, chỉnh sửa thông tin, đổi ảnh và xóa mô hình có hộp thoại xác nhận an toàn.
+---
+
+## 4. Hướng dẫn triển khai lên cụm Kubernetes (Production / Cloud)
+
+### 4.1. Kiến trúc cụm Kubernetes 3-Node trên AWS EC2
+- **Node Control Plane**: `ip-172-31-39-7` (Public IP: `3.107.71.171`)
+- **Node Worker 1**: `ip-172-31-42-90` (Public IP: `16.176.226.153`)
+- **Node Worker 2**: `ip-172-31-45-172` (Public IP: `52.63.115.3`)
+- **CNI**: Flannel (`10.244.0.0/16`)
+
+### 4.2. Triển khai các Manifests
+Trên máy Control Plane (`cp`), áp dụng toàn bộ các file YAML theo thứ tự:
+
+```bash
+kubectl apply -f kubernetes/00-namespace.yaml
+kubectl apply -f kubernetes/01-secret-configmap.yaml
+kubectl apply -f kubernetes/02-storage.yaml
+kubectl apply -f kubernetes/03-mysql.yaml
+kubectl apply -f kubernetes/04-backend.yaml
+kubectl apply -f kubernetes/05-frontend.yaml
+```
+
+*(Hoặc áp dụng nhanh toàn bộ thư mục: `kubectl apply -f kubernetes/`)*
+
+### 4.3. Kiểm tra trạng thái triển khai
+```bash
+kubectl get pods -n mygarage -o wide
+kubectl get svc -n mygarage
+```
+
+- Truy cập web từ Internet thông qua NodePort:
+  - `http://3.107.71.171:30080` (Control Plane)
+  - `http://16.176.226.153:30080` (Worker 1)
+
+---
+
+## 5. Các kịch bản vận hành Kubernetes (Operations)
+
+### 5.1. Scale số lượng Replicas
+Tăng số lượng Pod Frontend lên 4 replicas để chịu tải cao:
+```bash
+kubectl scale deployment frontend -n mygarage --replicas=4
+kubectl get pods -n mygarage -l app=frontend -o wide
+```
+
+### 5.2. Rolling Update lên phiên bản v2
+Cập nhật image Frontend lên bản `v2` không làm gián đoạn dịch vụ:
+```bash
+kubectl set image deployment/frontend frontend=nthoang06/mygarage-frontend:v2 -n mygarage
+kubectl rollout status deployment/frontend -n mygarage
+```
+
+### 5.3. Rollback về phiên bản v1
+Quay lui về phiên bản ổn định trước đó khi phát hiện sự cố:
+```bash
+kubectl rollout undo deployment/frontend -n mygarage
+kubectl rollout status deployment/frontend -n mygarage
+```
+
+### 5.4. Thử nghiệm Self-Healing & High Availability (HA)
+Tắt 1 Worker node (`worker2`) trên Cloud:
+```bash
+kubectl get nodes
+# Quan sát worker2 chuyển sang NotReady
+kubectl get pods -n mygarage -o wide
+# Traffic người dùng vẫn được phục vụ liên tục thông qua worker1 nhờ podAntiAffinity và kube-proxy
+```
+
+---
+
+## 6. Chạy bộ kiểm thử tự động (Unit & Integration Tests)
+```bash
+pytest tests/test_api.py -v
+```
+Kết quả kiểm thử: **7/7 tests passed**.

@@ -1,7 +1,4 @@
-# ==============================================================================
-# Backend Dockerfile for MyGarage API
-# Python 3.12 Slim base for small size & security
-# ==============================================================================
+
 FROM python:3.12-slim
 
 # Set environment variables

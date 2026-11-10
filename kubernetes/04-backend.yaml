@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: mygarage
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - backend
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+      - name: init-uploads-permissions
+        image: busybox
+        command: ['sh', '-c', 'chmod 777 /app/uploads']
+        volumeMounts:
+        - name: uploads-data
+          mountPath: /app/uploads
+      containers:
+      - name: backend
+        image: nthoang06/mygarage-backend:v1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: mygarage-config
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mygarage-secret
+              key: SECRET_KEY
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mygarage-secret
+              key: MYSQL_PASSWORD
+        ports:
+        - containerPort: 5000
+          name: http
+        volumeMounts:
+        - name: uploads-data
+          mountPath: /app/uploads
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 20
+          periodSeconds: 15
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "384Mi"
+            cpu: "500m"
+      volumes:
+      - name: uploads-data
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: mygarage
+  labels:
+    app: backend
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+  selector:
+    app: backend
+  type: ClusterIP

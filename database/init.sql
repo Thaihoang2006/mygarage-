@@ -9,8 +9,23 @@ CREATE DATABASE IF NOT EXISTS mygarage_db
 
 USE mygarage_db;
 
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    display_name VARCHAR(100) NULL,
+    avatar_url VARCHAR(255) NULL,
+    bio TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX ix_users_username (username),
+    INDEX ix_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS models (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id INT NULL,
     name VARCHAR(255) NOT NULL,
     category VARCHAR(50) NOT NULL DEFAULT 'Car',
     brand VARCHAR(100),
@@ -21,9 +36,34 @@ CREATE TABLE IF NOT EXISTS models (
     description TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_models_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_owner_id (owner_id),
     INDEX idx_category (category),
     INDEX idx_brand (brand),
     INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS collections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT NULL,
+    cover_image_url TEXT NULL,
+    visibility VARCHAR(20) NOT NULL DEFAULT 'private',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_collections_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX ix_collections_owner_id (owner_id),
+    INDEX ix_collections_visibility (visibility)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS collection_models (
+    collection_id INT NOT NULL,
+    model_id INT NOT NULL,
+    added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection_id, model_id),
+    CONSTRAINT fk_cm_collection FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cm_model FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Sample Seed Data (Inserted only if table is empty)

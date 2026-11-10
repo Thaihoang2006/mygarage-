@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+uploads/*
+!uploads/.gitkeep
+.git/
+.vscode/
+tests/
