@@ -13,7 +13,7 @@
             --secondary: #C9B99A;     /* Saddle Tan */
             --text-main: #1f2937;
             --text-muted: #4b5563;
-            --border-color: #e5e7eb;
+            --border-color: #d1d5db;
             --bg-code: #f3f4f6;
         }
 
@@ -27,42 +27,36 @@
             font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text-main);
             background-color: #f8fafc;
-            line-height: 1.6;
-            font-size: 13.5px;
+            line-height: 1.4;
+            font-size: 11px;
         }
 
         /* Print A4 Formatting */
         @page {
             size: A4 portrait;
-            margin: 18mm 15mm 18mm 15mm;
+            margin: 10mm 12mm 10mm 12mm;
         }
 
         @media print {
             body {
                 background-color: #fff;
-                font-size: 12.5px;
-                line-height: 1.5;
+                font-size: 10.5px;
+                line-height: 1.35;
             }
             .page {
                 box-shadow: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 max-width: 100% !important;
+                min-height: auto !important;
                 page-break-after: always;
                 break-after: page;
             }
             .no-print {
                 display: none !important;
             }
-            .page-break {
-                page-break-after: always;
-                break-after: page;
-            }
-            img {
-                max-height: 250px !important;
-            }
-            pre {
-                white-space: pre-wrap !important;
+            .figure img {
+                max-height: 140px !important;
             }
         }
 
@@ -70,15 +64,11 @@
         .page {
             background: #fff;
             max-width: 210mm;
-            min-height: 297mm;
-            margin: 20px auto;
-            padding: 20mm 18mm;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin: 15px auto;
+            padding: 12mm 15mm;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
             border-radius: 4px;
             position: relative;
-        }
-
-        .page-break {
             page-break-after: always;
             break-after: page;
         }
@@ -90,43 +80,43 @@
         }
 
         h1 {
-            font-size: 20px;
+            font-size: 15px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             border-bottom: 2px solid var(--primary);
-            padding-bottom: 6px;
+            padding-bottom: 3px;
         }
 
         h2 {
-            font-size: 16px;
-            margin-top: 14px;
-            margin-bottom: 8px;
+            font-size: 12.5px;
+            margin-top: 8px;
+            margin-bottom: 4px;
             color: var(--primary-accent);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
         h3 {
-            font-size: 14px;
-            margin-top: 10px;
-            margin-bottom: 6px;
+            font-size: 11.5px;
+            margin-top: 6px;
+            margin-bottom: 3px;
             color: var(--primary);
         }
 
         p {
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             text-align: justify;
         }
 
         ul, ol {
-            margin-left: 20px;
-            margin-bottom: 8px;
+            margin-left: 16px;
+            margin-bottom: 5px;
         }
 
         li {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         /* Links & Code */
@@ -135,16 +125,13 @@
             text-decoration: none;
             word-break: break-all;
         }
-        a:hover {
-            text-decoration: underline;
-        }
 
         code {
             font-family: 'JetBrains Mono', Consolas, monospace;
             background: var(--bg-code);
-            padding: 2px 5px;
+            padding: 1px 4px;
             border-radius: 3px;
-            font-size: 11.5px;
+            font-size: 10px;
             color: #b91c1c;
             border: 1px solid #e5e7eb;
         }
@@ -153,12 +140,12 @@
             font-family: 'JetBrains Mono', Consolas, monospace;
             background: #111827;
             color: #f9fafb;
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            line-height: 1.45;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            line-height: 1.35;
             overflow-x: auto;
-            margin: 8px 0;
+            margin: 5px 0;
         }
 
         pre code {
@@ -172,13 +159,13 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 12px;
+            margin: 6px 0;
+            font-size: 10px;
         }
 
         th, td {
             border: 1px solid #d1d5db;
-            padding: 6px 10px;
+            padding: 4px 6px;
             text-align: left;
         }
 
@@ -194,32 +181,32 @@
 
         /* Images & Figures */
         .figure {
-            margin: 10px 0;
+            margin: 6px 0;
             text-align: center;
         }
 
         .figure img {
-            max-width: 100%;
-            max-height: 230px;
+            max-width: 92%;
+            max-height: 145px;
             border: 1px solid #d1d5db;
-            border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             display: inline-block;
         }
 
         .figure-caption {
-            font-size: 11px;
+            font-size: 9.5px;
             font-style: italic;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         /* Badges & Tags */
         .badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10.5px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 9.5px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -235,102 +222,90 @@
             background: var(--primary-accent);
             color: #fff;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 30px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(100, 30, 42, 0.4);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             z-index: 9999;
-            transition: all 0.2s;
-        }
-        .print-btn:hover {
-            background: #4a141e;
-            transform: translateY(-2px);
         }
 
         /* Cover Page Styling */
         .cover-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 250mm;
             text-align: center;
-            padding: 15mm 5mm;
+            padding: 10mm 5mm 5mm 5mm;
         }
 
         .cover-header {
             border-bottom: 2px solid var(--primary);
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
 
         .cover-header h3 {
-            font-size: 15px;
+            font-size: 13px;
             letter-spacing: 1px;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin: 0 0 5px 0;
+            margin-bottom: 4px;
         }
 
         .cover-header h2 {
-            font-size: 17px;
+            font-size: 15px;
             color: var(--primary);
-            margin: 0;
             display: block;
             text-align: center;
         }
 
         .cover-title-box {
-            margin: 40px 0;
+            margin: 25px 0 15px 0;
         }
 
         .cover-title-box h1 {
-            font-size: 24px;
+            font-size: 21px;
             color: var(--primary-accent);
-            line-height: 1.35;
+            line-height: 1.3;
             border-bottom: none;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .cover-subtitle {
-            font-size: 15px;
+            font-size: 13px;
             color: var(--primary);
             font-weight: 600;
         }
 
         .cover-info {
-            margin: 30px auto;
+            margin: 15px auto;
             width: 100%;
-            max-width: 600px;
             text-align: left;
         }
 
         .cover-footer {
             border-top: 1px solid var(--border-color);
-            padding-top: 15px;
-            font-size: 12px;
+            padding-top: 10px;
+            font-size: 11px;
             color: var(--text-muted);
+            margin-top: 15px;
         }
 
-        /* Compact Callout */
         .callout {
             background: #f0fdf4;
-            border-left: 4px solid #16a34a;
-            padding: 8px 12px;
-            margin: 8px 0;
+            border-left: 3px solid #16a34a;
+            padding: 6px 10px;
+            margin: 5px 0;
             border-radius: 0 4px 4px 0;
-            font-size: 12px;
+            font-size: 10.5px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Floating Print Button (Visible only on browser) -->
     <button class="print-btn no-print" onclick="window.print()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
         In / Xuất PDF (Ctrl + P)
     </button>
 
@@ -344,7 +319,7 @@
         <div class="cover-title-box">
             <h1>BÁO CÁO DỰ ÁN MYGARAGE</h1>
             <p class="cover-subtitle">Đóng Gói Container Hóa & Triển Khai Vận Hành Hệ Thống Trên Cụm Kubernetes 3-Node (AWS Cloud)</p>
-            <div style="margin-top: 15px;">
+            <div style="margin-top: 10px;">
                 <span class="badge badge-burgundy">Docker Hub v1/v2</span>
                 <span class="badge badge-green">K8s v1.31 3-Node AWS</span>
                 <span class="badge badge-blue">High Availability</span>
@@ -352,21 +327,21 @@
         </div>
 
         <div class="cover-info">
-            <table style="border: none;">
-                <tr style="background: none;"><td style="border: none; font-weight: 600; width: 140px;">Giảng viên hướng dẫn:</td><td style="border: none;">[Họ và tên Giảng viên]</td></tr>
+            <table style="border: none; margin-bottom: 8px;">
+                <tr style="background: none;"><td style="border: none; font-weight: 600; width: 130px;">Giảng viên hướng dẫn:</td><td style="border: none;">[Họ và tên Giảng viên]</td></tr>
                 <tr style="background: none;"><td style="border: none; font-weight: 600;">Lớp / Học phần:</td><td style="border: none;">[Tên Lớp / Khóa CKA 2026]</td></tr>
                 <tr style="background: none;"><td style="border: none; font-weight: 600;">Repository GitHub:</td><td style="border: none;"><a href="https://github.com/Thaihoang2006/mygarage-" target="_blank">https://github.com/Thaihoang2006/mygarage-</a></td></tr>
-                <tr style="background: none;"><td style="border: none; font-weight: 600;">Demo Trực tiếp (AWS):</td><td style="border: none;"><a href="http://3.107.71.171:30080" target="_blank">http://3.107.71.171:30080</a></td></tr>
+                <tr style="background: none;"><td style="border: none; font-weight: 600;">Demo Trực tiếp (AWS):</td><td style="border: none;"><a href="http://3.107.71.171:30080" target="_blank">http://3.107.71.171:30080</a> (NodePort)</td></tr>
             </table>
 
-            <h4 style="margin: 15px 0 8px 0; color: var(--primary);">DANH SÁCH THÀNH VIÊN NHÓM</h4>
+            <h4 style="margin: 8px 0 4px 0; color: var(--primary); font-size: 11px;">DANH SÁCH THÀNH VIÊN NHÓM</h4>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px; text-align: center;">STT</th>
+                        <th style="width: 30px; text-align: center;">STT</th>
                         <th>Họ và tên</th>
-                        <th style="width: 110px; text-align: center;">Mã sinh viên</th>
-                        <th style="width: 90px; text-align: center;">Lớp</th>
+                        <th style="width: 95px; text-align: center;">Mã sinh viên</th>
+                        <th style="width: 75px; text-align: center;">Lớp</th>
                         <th>Nhiệm vụ đóng góp chính</th>
                     </tr>
                 </thead>
@@ -421,7 +396,7 @@
         <ul>
             <li><strong>Chọn Base Image tối giản</strong>: Sử dụng <code>python:3.12-slim</code> cho backend và <code>nginx:alpine</code> cho frontend để giảm kích thước image xuống mức tối thiểu và loại bỏ các gói phần mềm thừa thãi.</li>
             <li><strong>Tận dụng cơ chế Layer Caching</strong>: Đưa các lệnh cài đặt thư viện (<code>pip install</code>) lên trước lệnh copy mã nguồn để tăng tốc độ build khi thay đổi code.</li>
-            <li><strong>Sử dụng <code>.dockerignore</code></strong>: Loại bỏ hoàn toàn các file tạm thời, cache Python (<code>__pycache__</code>), môi trường ảo (<code>venv</code>), và đặc biệt là file biến môi trường nhạy cảm <code>.env</code>.</li>
+            <li><strong>Sử dụng <code>.dockerignore</code></strong>: Loại bỏ hoàn toàn các file tạm thời, cache Python (<code>__pycache__</code>), môi trường ảo (<code>venv</code>), và file biến môi trường nhạy cảm <code>.env</code>.</li>
         </ul>
 
         <h3>Cấu hình Dockerfile Backend:</h3>
@@ -515,7 +490,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", 
         <ul>
             <li><code>00-namespace.yaml</code>: Khởi tạo không gian làm việc cô lập <code>mygarage</code>.</li>
             <li><code>01-secret-configmap.yaml</code>: Lưu trữ thông tin không nhạy cảm (<code>DB_HOST=db</code>, <code>DB_NAME=mygarage_db</code>) trong ConfigMap; mật khẩu MySQL và chuỗi bảo mật JWT/Session trong Secret (mã hóa Opaque).</li>
-            <li><code>02-storage.yaml</code>: Khai báo <code>PersistentVolume</code> và <code>PersistentVolumeClaim</code> với loại <code>local-storage</code> (hostPath <code>/mnt/data/mysql</code> dung lượng 5Gi và <code>/mnt/data/uploads</code> dung lượng 2Gi) đảm bảo tính toàn vẹn dữ liệu.</li>
+            <li><code>02-storage.yaml</code>: Khai báo <code>PersistentVolume</code> và <code>PersistentVolumeClaim</code> với loại <code>local-storage</code> (hostPath <code>/mnt/data/mysql</code> 5Gi và <code>/mnt/data/uploads</code> 2Gi) đảm bảo tính toàn vẹn dữ liệu.</li>
             <li><code>03-mysql.yaml</code>: Deployment MySQL 8.0 tích hợp InitContainer <code>busybox</code> tự động thực hiện <code>chown 999:999</code> sửa lỗi phân quyền volume, đi kèm Service nội bộ <code>ClusterIP (3306)</code>.</li>
             <li><code>04-backend.yaml</code>: Deployment Backend với <strong>2 replicas</strong>, gắn <code>podAntiAffinity</code>, Service nội bộ <code>ClusterIP (5000)</code>.</li>
             <li><code>05-frontend.yaml</code>: Deployment Frontend với <strong>2 replicas</strong> (Nginx Alpine Reverse Proxy), gắn <code>podAntiAffinity</code>, Service ngoại vi <strong>NodePort</strong> cổng cố định <strong>30080</strong>.</li>
@@ -587,7 +562,7 @@ kubectl get pods -n mygarage -l app=frontend -o wide</code></pre>
         <p><strong>Cập nhật phiên bản v2 (Zero-Downtime):</strong></p>
         <pre><code>kubectl set image deployment/frontend frontend=nthoang06/mygarage-frontend:v2 -n mygarage
 kubectl rollout status deployment/frontend -n mygarage</code></pre>
-        <p><em>Hiện tượng:</em> Kubernetes khởi tạo các Pod mang image <code>v2</code> song song với các Pod cũ. Khi Pod mới đạt trạng thái Ready, Service mới chuyển traffic sang và tiến hành hủy (terminate) các Pod cũ. Web không hề bị gián đoạn dù chỉ 1 giây.</p>
+        <p><em>Hiện tượng:</em> Kubernetes khởi tạo các Pod mang image <code>v2</code> song song với các Pod cũ. Khi Pod mới đạt trạng thái Ready, Service mới chuyển traffic sang và tiến hành hủy các Pod cũ. Web không hề bị gián đoạn.</p>
 
         <p><strong>Quay lui về phiên bản v1 (Rollback):</strong></p>
         <pre><code>kubectl rollout undo deployment/frontend -n mygarage
@@ -616,17 +591,12 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
             <div class="figure-caption">Hình 5.3: Node worker2 chuyển sang trạng thái NotReady khi bị tắt trên Cloud AWS</div>
         </div>
 
-        <div class="figure">
-            <img src="images/07_pods_during_node_failure.png" alt="Pods Status Trong Sự Cố">
-            <div class="figure-caption">Hình 5.4: Trạng thái các Pods và tính sẵn sàng của cụm trong suốt quá trình xảy ra sự cố</div>
-        </div>
-
         <h3>2. Giải thích Sâu Cơ chế Tự phục hồi (Self-Healing) & Tính sẵn sàng cao (High Availability):</h3>
         <p>Website MyGarage vẫn phục vụ bình thường từ trình duyệt nhờ vào sự phối hợp của 3 cơ chế cốt lõi trong Kubernetes:</p>
         <ol>
             <li><strong>PodAntiAffinity</strong>: Đã phân tách rủi ro ngay từ đầu bằng cách trải đều các bản sao Pod lên cả 2 máy chủ vật lý riêng biệt, không để xảy ra "Single Point of Failure".</li>
             <li><strong>Service & Endpoints Routing</strong>: Kube-proxy cập nhật bảng iptables theo thời gian thực. Khi worker2 sập, toàn bộ lưu lượng cổng 30080 tự động được dồn sang các Pod khỏe mạnh trên worker1.</li>
-            <li><strong>Reconciliation Loop (Node Lifecycle Controller)</strong>: Khi node NotReady quá ngưỡng timeout quy định (mặc định 5 phút), K8s sẽ kích hoạt cơ chế Pod Eviction, đánh dấu các Pod cũ là Terminating và tự động tái lập (reschedule) các Pod mới sang các node còn sống để khôi phục đúng số lượng replica mong muốn.</li>
+            <li><strong>Reconciliation Loop (Node Lifecycle Controller)</strong>: Khi node NotReady quá ngưỡng timeout quy định (mặc định 5 phút), K8s sẽ kích hoạt cơ chế Pod Eviction, đánh dấu các Pod cũ là Terminating và tự động tái lập các Pod mới sang các node còn sống.</li>
         </ol>
     </div>
 
@@ -638,8 +608,8 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
         <table>
             <thead>
                 <tr>
-                    <th style="width: 35px; text-align: center;">STT</th>
-                    <th style="width: 150px;">Khó khăn kỹ thuật</th>
+                    <th style="width: 25px; text-align: center;">STT</th>
+                    <th style="width: 140px;">Khó khăn kỹ thuật</th>
                     <th>Nguyên nhân gốc rễ</th>
                     <th>Giải pháp xử lý triệt để</th>
                 </tr>
@@ -648,7 +618,7 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
                 <tr>
                     <td style="text-align: center;">1</td>
                     <td><strong>Xung đột C-extension MySQLclient</strong></td>
-                    <td>Môi trường phát triển ban đầu trên Windows thiếu Visual C++ Build Tools và các file nhị phân <code>.pyd</code> của driver MySQL không tương thích</td>
+                    <td>Môi trường phát triển ban đầu trên Windows thiếu Visual C++ Build Tools và các file nhị phân <code>.pyd</code> không tương thích</td>
                     <td>Chuyển đổi hoàn toàn sang <code>PyMySQL</code> (Pure Python) kết hợp SQLAlchemy, đồng thời đóng gói trực tiếp vào Docker Container Linux đồng nhất</td>
                 </tr>
                 <tr>
@@ -697,8 +667,8 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
             <thead>
                 <tr>
                     <th>Nội dung Đánh giá (Barem)</th>
-                    <th style="width: 70px; text-align: center;">Điểm tối đa</th>
-                    <th style="width: 90px; text-align: center;">Kết quả nhóm</th>
+                    <th style="width: 65px; text-align: center;">Điểm tối đa</th>
+                    <th style="width: 85px; text-align: center;">Kết quả nhóm</th>
                     <th>Chi tiết minh chứng</th>
                 </tr>
             </thead>
@@ -736,7 +706,7 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
                 <tr style="font-weight: 700; background-color: #f0fdf4;">
                     <td>TỔNG ĐIỂM TỰ ĐÁNH GIÁ</td>
                     <td style="text-align: center;">10.0 đ</td>
-                    <td style="text-align: center;"><span class="badge badge-green" style="font-size: 12px;">10.0 / 10.0 đ</span></td>
+                    <td style="text-align: center;"><span class="badge badge-green" style="font-size: 11px;">10.0 / 10.0 đ</span></td>
                     <td>Đạt chuẩn tối đa mọi yêu cầu kỹ thuật và tính sáng tạo</td>
                 </tr>
             </tbody>
@@ -750,8 +720,8 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
             <li><strong>Giám sát Hệ thống (Observability)</strong>: Tích hợp ngăn xếp Prometheus và Grafana để thu thập chỉ số hiệu năng (CPU, RAM, Network I/O) và cấu hình cảnh báo tự động.</li>
         </ul>
 
-        <div style="margin-top: 25px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-            <p style="font-weight: 600; color: var(--primary);">HẾT BÁO CÁO - XIN TRÂN TRỌNG CẢM ƠN THẦY CÔ VÀ CÁC BẠN ĐÃ THEO DÕI!</p>
+        <div style="margin-top: 15px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+            <p style="font-weight: 600; color: var(--primary); font-size: 11px;">HẾT BÁO CÁO - XIN TRÂN TRỌNG CẢM ƠN THẦY CÔ VÀ CÁC BẠN ĐÃ THEO DÕI!</p>
         </div>
     </div>
 
