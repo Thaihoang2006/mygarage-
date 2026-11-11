@@ -423,9 +423,10 @@ CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", 
                 </tr>
             </thead>
             <tbody>
-                <tr><td><code>nthoang06/mygarage-backend</code></td><td><code>v1</code></td><td>Bản ổn định API phục vụ triển khai sản phẩm</td><td>~185 MB</td></tr>
-                <tr><td><code>nthoang06/mygarage-frontend</code></td><td><code>v1</code></td><td>Bản giao diện chuẩn ban đầu</td><td>~23 MB</td></tr>
-                <tr><td><code>nthoang06/mygarage-frontend</code></td><td><code>v2</code></td><td>Bản nâng cấp có gắn badge "v2.0" cho bài toán Rolling Update</td><td>~23 MB</td></tr>
+                <tr><td><code>nthoang06/mygarage-backend</code></td><td><code>v1</code></td><td>Bản ổn định API phục vụ triển khai sản phẩm ban đầu</td><td>~185 MB</td></tr>
+                <tr><td><code>nthoang06/mygarage-backend</code></td><td><code>v3</code></td><td>Bản nâng cấp phân quyền tenant, Community, Profile, Vote API</td><td>~188 MB</td></tr>
+                <tr><td><code>nthoang06/mygarage-frontend</code></td><td><code>v1/v2</code></td><td>Bản giao diện chuẩn ban đầu & bản thử nghiệm Rolling Update</td><td>~23 MB</td></tr>
+                <tr><td><code>nthoang06/mygarage-frontend</code></td><td><code>v3</code></td><td>Bản nâng cấp toàn diện Community, Profile, Leaderboard, Vote</td><td>~24 MB</td></tr>
             </tbody>
         </table>
 
@@ -645,6 +646,18 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
                     <td>PowerShell giữ kết nối SSH ngầm quá lâu bị ngắt do firewall AWS, dẫn đến hiểu nhầm thực thi nhầm lệnh Linux trên PowerShell</td>
                     <td>Cấu hình <code>ServerAliveInterval 60</code> trong SSH, quy chuẩn rõ ràng việc sử dụng terminal remote và kiểm soát session</td>
                 </tr>
+                <tr>
+                    <td style="text-align: center;">6</td>
+                    <td><strong>Lỗi lộ mô hình giữa các tài khoản (Tenant Isolation)</strong></td>
+                    <td>Endpoint <code>/api/models</code> và <code>/api/stats</code> phụ thuộc vào query parameter, dẫn đến hiển thị mô hình của người khác trong My Garage</td>
+                    <td>Tái cấu trúc xác thực backend: ép buộc <code>owner_id == current_user_id</code> trên mọi phương thức GET/POST/PUT/DELETE, che giấu giá và ngày mua nhạy cảm</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">7</td>
+                    <td><strong>Nâng cấp Schema Database v3 trên K8s Pod</strong></td>
+                    <td>Cần bổ sung cột <code>cover_url</code> và bảng <code>collection_votes</code> vào Pod MySQL đang chạy trên cụm K8s mà không được làm mất dữ liệu người dùng cũ</td>
+                    <td>Thiết kế migration script idempotent (kiểm tra tồn tại trước khi ALTER), nạp trực tiếp qua <code>kubectl exec</code> mà không cần khởi động lại container MySQL</td>
+                </tr>
             </tbody>
         </table>
 
@@ -677,7 +690,7 @@ kubectl rollout status deployment/frontend -n mygarage</code></pre>
                     <td><strong>Mục 1: Đóng gói Docker & Registry</strong></td>
                     <td style="text-align: center;">2.0 đ</td>
                     <td style="text-align: center;"><span class="badge badge-green">2.0 / 2.0 đ</span></td>
-                    <td>Dockerfiles tối ưu, tag v1/v2 chuẩn mực, push thành công lên Docker Hub <code>nthoang06</code></td>
+                    <td>Dockerfiles tối ưu, tag v1/v2/v3 chuẩn mực, push thành công lên Docker Hub <code>nthoang06</code></td>
                 </tr>
                 <tr>
                     <td><strong>Mục 2: Dựng cụm Kubernetes 3-Node Cloud</strong></td>

@@ -99,18 +99,18 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ### 2.2. Chiến lược Đánh Tag Phiên bản & Đẩy lên Docker Hub
 Theo yêu cầu bắt buộc của môn học, nhóm **tuyệt đối không sử dụng tag `latest`**, thay vào đó tuân thủ đánh tag phiên bản tường minh:
-- `nthoang06/mygarage-backend:v1`: Phiên bản API v1 ổn định.
+- `nthoang06/mygarage-backend:v1`: Phiên bản API v1 ổn định ban đầu.
+- `nthoang06/mygarage-backend:v3`: Phiên bản API v3 nâng cấp phân quyền biệt lập, Community, Profile, Vote.
 - `nthoang06/mygarage-frontend:v1`: Phiên bản giao diện v1 chuẩn.
 - `nthoang06/mygarage-frontend:v2`: Phiên bản giao diện v2 có gắn badge trực quan "v2.0" phục vụ kịch bản Rolling Update & Rollback.
+- `nthoang06/mygarage-frontend:v3`: Phiên bản giao diện v3 hoàn thiện toàn bộ tính năng Community, Leaderboard, Profile.
 
 **Lệnh thực thi build và push:**
 ```bash
-docker build -t nthoang06/mygarage-backend:v1 ./backend
-docker build -t nthoang06/mygarage-frontend:v1 ./frontend
-docker build -t nthoang06/mygarage-frontend:v2 ./frontend
-docker push nthoang06/mygarage-backend:v1
-docker push nthoang06/mygarage-frontend:v1
-docker push nthoang06/mygarage-frontend:v2
+docker build -t nthoang06/mygarage-backend:v3 ./backend
+docker build -t nthoang06/mygarage-frontend:v3 ./frontend
+docker push nthoang06/mygarage-backend:v3
+docker push nthoang06/mygarage-frontend:v3
 ```
 
 ![Bằng chứng Docker Hub Push](images/01_docker_push_v1.png)
@@ -268,6 +268,8 @@ Trong quá trình thực hiện bài tập lớn, nhóm đã đối mặt và gi
 | 3 | Cảnh báo thiếu RAM khi dùng cấu hình `t3.micro` | Kubeadm khuyến nghị tối thiểu 2GB RAM cho Control Plane, `t3.micro` chỉ có 1GB dễ bị OOM-Killed khi chạy etcd và core services | Nâng cấp toàn bộ 3 máy ảo lên dòng **`t3.small` (2 vCPU, 2GB RAM)**, tận dụng gói credit $100 AWS của nhóm để hệ thống vận hành trơn tru |
 | 4 | Lỗi quyền ghi `/var/lib/mysql` trong MySQL Pod | Volume hostPath gắn từ node gốc mang UID của root, trong khi container MySQL chạy dưới user mysql (UID 999) | Bổ sung **InitContainer `busybox`** chạy lệnh `chown -R 999:999 /var/lib/mysql` trước khi container chính khởi động |
 | 5 | Kết nối SSH bị Timeout khi ngắt kết nối mạng | Windows PowerShell giữ session SSH quá lâu bị đứt kết nối ngầm | Cấu hình `ServerAliveInterval 60` trong SSH config và hướng dẫn thành viên phân biệt rõ ràng giữa terminal local PowerShell và remote bash |
+| 6 | Lỗi lộ mô hình giữa các tài khoản (Tenant Isolation) | Endpoint `/api/models` và `/api/stats` phụ thuộc vào query parameter, dẫn đến hiển thị mô hình của người khác trong My Garage | Tái cấu trúc phân quyền backend: bắt buộc `owner_id == current_user_id` trên mọi phương thức GET/POST/PUT/DELETE, che giấu giá và ngày mua nhạy cảm của người khác |
+| 7 | Nâng cấp Schema Database v3 trên K8s Pod | Cần bổ sung cột `cover_url` và bảng `collection_votes` vào Pod MySQL đang chạy trên cụm K8s mà không được làm mất dữ liệu người dùng cũ | Thiết kế migration script idempotent (kiểm tra tồn tại trước khi ALTER), nạp trực tiếp qua `kubectl exec` bảo toàn nguyên vẹn 100% dữ liệu cũ |
 
 ---
 
@@ -275,10 +277,11 @@ Trong quá trình thực hiện bài tập lớn, nhóm đã đối mặt và gi
 
 ### 7.1. Kết luận Đánh giá
 Đề tài đã hoàn thành xuất sắc **100% các mục tiêu và barem điểm** đề ra:
-- [x] Đóng gói hoàn chỉnh 3 container microservices tối ưu, push đầy đủ các tag phiên bản `v1`, `v2` lên Docker Hub.
+- [x] Đóng gói hoàn chỉnh 3 container microservices tối ưu, push đầy đủ các tag phiên bản `v1`, `v2`, `v3` lên Docker Hub.
+- [x] Nâng cấp hệ sinh thái mạng xã hội mô hình: Trang cá nhân `/u/username`, Cộng đồng Community, Thư viện Public/Private, Hệ thống Vote và Bảng xếp hạng Top Collections.
 - [x] Thiết lập thành công cụm Kubernetes 3-Node hoàn chỉnh trên Cloud AWS với CNI Flannel.
-- [x] Khai báo đầy đủ các manifest K8s (Namespace, Secret, ConfigMap, PV/PVC, Deployment $\ge 2$ replicas, PodAntiAffinity, NodePort).
-- [x] Vận hành thành công toàn bộ các kịch bản thực tế: Scale 4 replicas, Rolling Update, Rollback, Thử nghiệm Node Failure & Self-Healing.
+- [x] Khai báo đầy đủ các manifest K8s (Namespace, Secret, ConfigMap, PV/PVC, Deployment $\ge 2$ replicas, PodAntiAffinity, NodePort 30080).
+- [x] Vận hành thành công toàn bộ các kịch bản thực tế: Scale 4 replicas, Rolling Update v3, Rollback, Thử nghiệm Node Failure & Self-Healing.
 - [x] Mã nguồn và tài liệu hướng dẫn được đồng bộ và công khai trên GitHub Repository.
 
 ### 7.2. Định hướng Phát triển Nâng cao
