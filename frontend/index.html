@@ -82,6 +82,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="#community" class="nav-link" data-view="community">
+                            <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+                            <span class="nav-label" data-i18n="navCommunity">Cộng Đồng</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#leaderboard" class="nav-link" data-view="leaderboard">
+                            <span class="nav-icon"><i class="fa-solid fa-trophy"></i></span>
+                            <span class="nav-label" data-i18n="navLeaderboard">Top Collections</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="#add-model" class="nav-link" data-view="add-model">
                             <span class="nav-icon"><i class="fa-solid fa-square-plus"></i></span>
                             <span class="nav-label" data-i18n="navAddModel">Thêm Mô Hình</span>
@@ -539,6 +551,168 @@
                     <p class="empty-desc" data-i18n="libEmptyDesc">Bạn chưa tạo thư viện nào. Hãy bấm nút 'Tạo Thư Viện Mới' để bắt đầu gom nhóm các mô hình yêu thích!</p>
                 </div>
             </section>
+
+            <!-- ============================================================= -->
+            <!-- VIEW: COMMUNITY (CỘNG ĐỒNG SƯU TẦM) -->
+            <!-- ============================================================= -->
+            <section id="view-community" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title" data-i18n="communityTitle">Cộng Đồng Sưu Tầm</h2>
+                        <p class="view-subtitle" data-i18n="communitySubtitle">Khám phá các thư viện mô hình công khai được chia sẻ bởi cộng đồng đam mê</p>
+                    </div>
+                </div>
+
+                <!-- Community Filter Bar -->
+                <div class="community-filter-bar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="communitySearchInput" class="search-input" placeholder="Tìm kiếm bộ sưu tập, người sưu tầm..." data-i18n="searchCommunityPlaceholder">
+                        <button id="clearCommunitySearchBtn" class="clear-search-btn hidden" title="Xóa tìm kiếm">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="filter-controls">
+                        <div class="select-group">
+                            <label for="communitySortSelect" class="filter-label" data-i18n="labelSort">Sắp xếp:</label>
+                            <select id="communitySortSelect" class="filter-select">
+                                <option value="newest" data-i18n="sortNewest">Mới thêm gần đây</option>
+                                <option value="most_voted" selected data-i18n="sortMostVoted">Nhiều lượt vote nhất</option>
+                                <option value="most_models" data-i18n="sortMostModels">Nhiều mô hình nhất</option>
+                                <option value="oldest" data-i18n="sortOldest">Cũ nhất</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Community Collections Grid -->
+                <div class="collections-grid" id="communityGrid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="communityEmptyState" class="empty-state hidden">
+                    <div class="empty-icon"><i class="fa-solid fa-users-slash"></i></div>
+                    <h3 class="empty-title" data-i18n="communityEmptyTitle">Không Tìm Thấy Bộ Sưu Tập Nào</h3>
+                    <p class="empty-desc" data-i18n="communityEmptyDesc">Chưa có bộ sưu tập công khai nào phù hợp với từ khóa tìm kiếm.</p>
+                </div>
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- VIEW: TOP COLLECTIONS (BẢNG XẾP HẠNG) -->
+            <!-- ============================================================= -->
+            <section id="view-leaderboard" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title" data-i18n="leaderboardTitle">Bảng Xếp Hạng Bộ Sưu Tập</h2>
+                        <p class="view-subtitle" data-i18n="leaderboardSubtitle">Vinh danh các thư viện mô hình được yêu thích và bình chọn nhiều nhất</p>
+                    </div>
+                </div>
+
+                <!-- Period Tabs -->
+                <div class="leaderboard-tabs-bar">
+                    <div class="collections-tabs">
+                        <button class="col-tab-btn active" id="tabLbAllTime" data-period="all" data-i18n="lbTabAllTime">
+                            <i class="fa-solid fa-crown"></i> Toàn Thời Gian (All Time)
+                        </button>
+                        <button class="col-tab-btn" id="tabLbThisMonth" data-period="month" data-i18n="lbTabThisMonth">
+                            <i class="fa-solid fa-fire"></i> Tháng Này (This Month)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Leaderboard Cards / List -->
+                <div class="leaderboard-list" id="leaderboardList">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="leaderboardEmptyState" class="empty-state hidden">
+                    <div class="empty-icon"><i class="fa-solid fa-trophy"></i></div>
+                    <h3 class="empty-title" data-i18n="lbEmptyTitle">Chưa Có Bảng Xếp Hạng</h3>
+                    <p class="empty-desc" data-i18n="lbEmptyDesc">Hãy là người đầu tiên chia sẻ thư viện công khai và nhận những lượt vote đầu tiên!</p>
+                </div>
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- VIEW: USER PROFILE (TRANG CÁ NHÂN /u/username) -->
+            <!-- ============================================================= -->
+            <section id="view-profile" class="content-view">
+                <!-- Profile Hero Cover & Avatar -->
+                <div class="profile-hero-card">
+                    <div class="profile-cover-banner" id="profileCoverBanner">
+                        <!-- Background image or gradient -->
+                    </div>
+
+                    <div class="profile-header-content">
+                        <div class="profile-avatar-wrap">
+                            <div class="profile-avatar-large" id="profileAvatarLarge">TH</div>
+                        </div>
+
+                        <div class="profile-main-meta">
+                            <div class="profile-title-row">
+                                <div>
+                                    <h2 class="profile-display-name" id="profileDisplayName">Thái Hoàng</h2>
+                                    <span class="profile-username" id="profileUsername">@thaihoang</span>
+                                </div>
+                                <div id="profileOwnerControls" class="hidden">
+                                    <button class="btn btn-outline btn-sm" id="openEditProfileBtn">
+                                        <i class="fa-solid fa-user-pen"></i> <span data-i18n="btnEditProfile">Chỉnh Sửa Hồ Sơ</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p class="profile-bio" id="profileBio">Đam mê sưu tầm mô hình xe die-cast 1:18 và Gunpla.</p>
+
+                            <div class="profile-meta-tags">
+                                <span class="profile-tag">
+                                    <i class="fa-regular fa-calendar"></i> <span data-i18n="joinedDate">Tham gia:</span> <strong id="profileJoinedDate">—</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Statistics Metric Cards -->
+                <div class="profile-stats-row">
+                    <div class="profile-stat-card">
+                        <div class="stat-icon-wrap" style="color: var(--color-sky);"><i class="fa-solid fa-layer-group"></i></div>
+                        <div>
+                            <span class="stat-num" id="profileStatCollections">0</span>
+                            <span class="stat-lbl" data-i18n="statPublicLibs">Thư Viện Công Khai</span>
+                        </div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="stat-icon-wrap" style="color: var(--color-pink);"><i class="fa-solid fa-car-side"></i></div>
+                        <div>
+                            <span class="stat-num" id="profileStatModels">0</span>
+                            <span class="stat-lbl" data-i18n="statPublicModels">Mô Hình Công Khai</span>
+                        </div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="stat-icon-wrap" style="color: #ef4444;"><i class="fa-solid fa-heart"></i></div>
+                        <div>
+                            <span class="stat-num" id="profileStatVotes">0</span>
+                            <span class="stat-lbl" data-i18n="statTotalVotes">Lượt Vote Nhận Được</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Public Collections Grid -->
+                <div class="profile-collections-section">
+                    <h3 class="section-title">
+                        <i class="fa-solid fa-box-archive"></i> <span data-i18n="userCollectionsTitle">Danh Sách Thư Viện</span>
+                    </h3>
+                    <div class="collections-grid" id="profileCollectionsGrid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                    <div id="profileEmptyState" class="empty-state hidden">
+                        <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+                        <h3 class="empty-title" data-i18n="profileEmptyTitle">Chưa Có Thư Viện Công Khai</h3>
+                        <p class="empty-desc" data-i18n="profileEmptyDesc">Người dùng này chưa công khai thư viện mô hình nào.</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -978,6 +1152,56 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: EDIT USER PROFILE -->
+    <!-- ================================================================= -->
+    <div id="editProfileModal" class="modal-backdrop">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" data-i18n="editProfileTitle">Chỉnh Sửa Thông Tin Cá Nhân</h3>
+                    <button class="modal-close-btn" id="closeEditProfileModalBtn" title="Đóng">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form id="editProfileForm" class="p-4" style="padding: 20px 24px;">
+                    <div class="form-group">
+                        <label for="editProfileDisplayName" class="field-label required" data-i18n="regDisplayNameLabel">Tên hiển thị (Display Name)</label>
+                        <input type="text" id="editProfileDisplayName" class="form-input" required maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProfileBio" class="field-label" data-i18n="fieldBio">Giới thiệu bản thân (Bio)</label>
+                        <textarea id="editProfileBio" class="form-textarea" rows="3" placeholder="Chia sẻ về sở thích sưu tầm, dòng xe hay Gunpla yêu thích..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProfileAvatarUrl" class="field-label" data-i18n="fieldAvatar">Ảnh đại diện (URL hoặc tải tệp)</label>
+                        <input type="url" id="editProfileAvatarUrl" class="form-input" placeholder="https://images.unsplash.com/... hoặc dán link ảnh">
+                        <div style="margin-top: 6px;">
+                            <input type="file" id="editProfileAvatarFile" accept="image/*" class="form-input-file">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProfileCoverUrl" class="field-label" data-i18n="fieldCover">Ảnh bìa cá nhân (URL hoặc tải tệp)</label>
+                        <input type="url" id="editProfileCoverUrl" class="form-input" placeholder="https://images.unsplash.com/... hoặc dán link ảnh bìa">
+                        <div style="margin-top: 6px;">
+                            <input type="file" id="editProfileCoverFile" accept="image/*" class="form-input-file">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 16px 0 0; margin-top: 16px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 8px;">
+                        <button type="button" class="btn btn-outline" id="cancelEditProfileBtn"><span data-i18n="btnCancel">Hủy</span></button>
+                        <button type="submit" class="btn btn-primary" id="saveEditProfileBtn">
+                            <i class="fa-solid fa-check"></i> <span data-i18n="btnSaveProfile">Lưu Thay Đổi</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

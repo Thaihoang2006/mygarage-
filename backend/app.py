@@ -25,7 +25,7 @@ _ensure_pure_python_sqlalchemy()
 from sqlalchemy import or_, desc, asc, func
 
 from config import Config
-from models import db, User, ModelItem, Collection, CollectionModel
+from models import db, User, ModelItem, Collection, CollectionModel, CollectionVote
 
 def create_app(test_config=None):
     app = Flask(
@@ -66,10 +66,11 @@ def create_app(test_config=None):
     def check_csrf():
         # Only check mutating HTTP methods
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
-            # Exempt registration, login, and health checks
+            # Exempt registration, login, logout, and health checks
             exempt_paths = [
                 '/api/auth/login',
                 '/api/auth/register',
+                '/api/auth/logout',
                 '/healthz',
                 '/readyz'
             ]
@@ -298,24 +299,23 @@ def create_app(test_config=None):
     @app.route('/api/models', methods=['GET'])
     def get_models():
         """
-        Retrieve models with search, category, brand, and sort.
-        Supports filter my_models=true for authenticated users.
-        Strict Privacy: Prices and purchase dates are hidden for non-owners.
+        Retrieve models for authenticated user (My Garage).
+        Strict Ownership: Only returns models belonging to the currently logged-in user.
+        Search, filter, and sort are applied strictly within user's own models.
         """
         try:
             current_user_id = session.get('user_id')
-            query = ModelItem.query
+            if not current_user_id:
+                return jsonify({
+                    'success': False,
+                    'message': 'Vui lòng đăng nhập để xem bộ sưu tập của bạn trong My Garage.'
+                }), 401
+
+            query = ModelItem.query.filter(ModelItem.owner_id == current_user_id)
             search = request.args.get('search', '').strip()
             category = request.args.get('category', '').strip()
             brand = request.args.get('brand', '').strip()
             sort = request.args.get('sort', 'newest').strip()
-            my_models = request.args.get('my_models', '').lower() == 'true'
-
-            # If user explicitly requested only their models
-            if my_models:
-                if not current_user_id:
-                    return jsonify({'success': False, 'message': 'Vui lòng đăng nhập để xem mô hình của bạn.'}), 401
-                query = query.filter(ModelItem.owner_id == current_user_id)
 
             if search:
                 search_term = f"%{search}%"
@@ -358,12 +358,33 @@ def create_app(test_config=None):
 
     @app.route('/api/models/<int:model_id>', methods=['GET'])
     def get_model(model_id):
-        """Retrieve single model details by ID with privacy protection."""
+        """
+        Retrieve single model details by ID with strict ownership and privacy check.
+        - Owner: Allowed to view full details (price, date).
+        - Non-owner: Allowed only if model is part of at least one public collection (masked price/date).
+        - Otherwise: 403 Forbidden.
+        """
         current_user_id = session.get('user_id')
         item = db.session.get(ModelItem, model_id)
         if not item:
             return jsonify({'success': False, 'message': 'Không tìm thấy mô hình với ID này.'}), 404
-        return jsonify({'success': True, 'data': item.to_dict(current_user_id=current_user_id)}), 200
+
+        # If viewer is the owner
+        if current_user_id and item.owner_id == current_user_id:
+            return jsonify({'success': True, 'data': item.to_dict(current_user_id=current_user_id)}), 200
+
+        # Check if model belongs to at least one public collection
+        is_public = False
+        if hasattr(item, 'in_collections'):
+            is_public = item.in_collections.filter_by(visibility='public').first() is not None
+
+        if is_public:
+            return jsonify({'success': True, 'data': item.to_dict(current_user_id=current_user_id)}), 200
+
+        return jsonify({
+            'success': False,
+            'message': 'Bạn không có quyền truy cập mô hình riêng tư này.'
+        }), 403
 
     @app.route('/api/models', methods=['POST'])
     def create_model():
@@ -562,16 +583,27 @@ def create_app(test_config=None):
 
     @app.route('/api/stats', methods=['GET'])
     def get_stats():
-        """Retrieve aggregated stats for dashboard."""
+        """Retrieve aggregated stats strictly for the authenticated user's dashboard."""
         try:
             current_user_id = session.get('user_id')
-            total = ModelItem.query.count()
+            if not current_user_id:
+                return jsonify({
+                    'success': False,
+                    'message': 'Vui lòng đăng nhập để xem thống kê Dashboard.'
+                }), 401
 
-            # Dynamic category breakdown
+            user_query = ModelItem.query.filter_by(owner_id=current_user_id)
+            total = user_query.count()
+
+            # Dynamic category breakdown for this user only
             cat_counts = db.session.query(
                 ModelItem.category,
                 func.count(ModelItem.id)
-            ).filter(ModelItem.category != None, ModelItem.category != '').group_by(ModelItem.category).order_by(desc(func.count(ModelItem.id))).all()
+            ).filter(
+                ModelItem.owner_id == current_user_id,
+                ModelItem.category != None,
+                ModelItem.category != ''
+            ).group_by(ModelItem.category).order_by(desc(func.count(ModelItem.id))).all()
 
             categories_dict = {c[0]: c[1] for c in cat_counts}
             for base_cat in ['Car', 'Gundam', 'Other']:
@@ -587,26 +619,26 @@ def create_app(test_config=None):
             total_gundams = categories_dict.get('Gundam', 0)
             total_others = sum(cnt for cat_name, cnt in categories_dict.items() if cat_name not in ['Car', 'Gundam'])
 
-            # Total collection value
-            total_val_res = db.session.query(func.sum(ModelItem.price)).scalar()
+            # Total collection value for this user
+            total_val_res = db.session.query(func.sum(ModelItem.price)).filter(ModelItem.owner_id == current_user_id).scalar()
             total_value = float(total_val_res) if total_val_res is not None else 0.0
 
-            # Personal stats if logged in
-            my_total = 0
-            my_value = 0.0
-            if current_user_id:
-                my_total = ModelItem.query.filter_by(owner_id=current_user_id).count()
-                my_val_res = db.session.query(func.sum(ModelItem.price)).filter(ModelItem.owner_id == current_user_id).scalar()
-                my_value = float(my_val_res) if my_val_res is not None else 0.0
-
-            # Brand breakdown
+            # Brand breakdown for this user only
             brand_counts = db.session.query(
                 ModelItem.brand,
                 func.count(ModelItem.id)
-            ).filter(ModelItem.brand != None, ModelItem.brand != '').group_by(ModelItem.brand).order_by(desc(func.count(ModelItem.id))).limit(8).all()
+            ).filter(
+                ModelItem.owner_id == current_user_id,
+                ModelItem.brand != None,
+                ModelItem.brand != ''
+            ).group_by(ModelItem.brand).order_by(desc(func.count(ModelItem.id))).limit(8).all()
 
-            recent_items = ModelItem.query.order_by(desc(ModelItem.created_at)).limit(5).all()
-            all_brands = [b[0] for b in db.session.query(ModelItem.brand).filter(ModelItem.brand != None, ModelItem.brand != '').distinct().order_by(ModelItem.brand).all()]
+            recent_items = user_query.order_by(desc(ModelItem.created_at)).limit(5).all()
+            all_brands = [b[0] for b in db.session.query(ModelItem.brand).filter(
+                ModelItem.owner_id == current_user_id,
+                ModelItem.brand != None,
+                ModelItem.brand != ''
+            ).distinct().order_by(ModelItem.brand).all()]
 
             return jsonify({
                 'success': True,
@@ -616,8 +648,8 @@ def create_app(test_config=None):
                     'total_gundams': total_gundams,
                     'total_others': total_others,
                     'total_value': total_value,
-                    'my_total': my_total,
-                    'my_value': my_value,
+                    'my_total': total,
+                    'my_value': total_value,
                     'categories': categories_dict,
                     'available_categories': available_categories,
                     'top_brands': [{'brand': b[0], 'count': b[1]} for b in brand_counts],
@@ -797,6 +829,10 @@ def create_app(test_config=None):
         if not model:
             return jsonify({'success': False, 'message': 'Không tìm thấy mô hình.'}), 404
 
+        # Ownership check: Only owner of the model can add it into collections
+        if model.owner_id != current_user_id:
+            return jsonify({'success': False, 'message': 'Bạn chỉ có thể thêm mô hình do chính mình sở hữu vào thư viện.'}), 403
+
         # Check if already added
         exists = CollectionModel.query.filter_by(collection_id=col_id, model_id=model_id).first()
         if exists:
@@ -832,8 +868,297 @@ def create_app(test_config=None):
         return jsonify({'success': True, 'message': 'Đã gỡ mô hình khỏi thư viện.'}), 200
 
     # -------------------------------------------------------------------------
+    # REST API: User Profiles & Community Features
+    # -------------------------------------------------------------------------
+    @app.route('/api/users/<username>/profile', methods=['GET'])
+    def get_user_profile(username):
+        """
+        Public/Owner user profile endpoint.
+        Returns user info, public collections, total public models, and total votes received.
+        If viewer is the profile owner, also returns their private collections.
+        """
+        try:
+            current_user_id = session.get('user_id')
+            user = User.query.filter(func.lower(User.username) == username.lower().strip()).first()
+            if not user:
+                return jsonify({'success': False, 'message': 'Không tìm thấy người dùng này.'}), 404
+
+            is_owner = (current_user_id is not None and current_user_id == user.id)
+
+            # Collections query: owner sees all, public only sees public
+            if is_owner:
+                collections = Collection.query.filter_by(owner_id=user.id).order_by(desc(Collection.created_at)).all()
+            else:
+                collections = Collection.query.filter_by(owner_id=user.id, visibility='public').order_by(desc(Collection.created_at)).all()
+
+            public_cols = [c for c in collections if c.visibility == 'public']
+
+            # Count distinct public models
+            public_model_ids = set()
+            for c in public_cols:
+                for m in c.models:
+                    public_model_ids.add(m.id)
+
+            # Total votes received across all public collections of this user
+            total_votes = db.session.query(func.count(CollectionVote.id)).join(
+                Collection, CollectionVote.collection_id == Collection.id
+            ).filter(
+                Collection.owner_id == user.id,
+                Collection.visibility == 'public'
+            ).scalar() or 0
+
+            profile_data = {
+                'id': user.id,
+                'username': user.username,
+                'display_name': user.display_name or user.username,
+                'avatar_url': user.avatar_url or '',
+                'cover_url': user.cover_url or '',
+                'bio': user.bio or '',
+                'created_at': user.created_at.strftime('%Y-%m-%d') if user.created_at else None,
+                'is_owner': is_owner,
+                'stats': {
+                    'total_public_collections': len(public_cols),
+                    'public_collections_count': len(public_cols),
+                    'total_public_models': len(public_model_ids),
+                    'public_models_count': len(public_model_ids),
+                    'total_votes_received': int(total_votes)
+                },
+                'collections': [c.to_dict(current_user_id=current_user_id, include_models=True) for c in collections]
+            }
+
+            return jsonify({'success': True, 'data': profile_data}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Lỗi khi tải profile: {str(e)}'}), 500
+
+    @app.route('/api/users/profile', methods=['PUT'])
+    def update_user_profile():
+        """Update authenticated user's profile (display_name, bio, avatar, cover)."""
+        current_user_id = session.get('user_id')
+        if not current_user_id:
+            return jsonify({'success': False, 'message': 'Vui lòng đăng nhập để chỉnh sửa thông tin cá nhân.'}), 401
+
+        user = db.session.get(User, current_user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'Tài khoản không tồn tại.'}), 404
+
+        try:
+            if request.content_type and 'multipart/form-data' in request.content_type:
+                data = request.form.to_dict()
+                avatar_file = request.files.get('avatar')
+                cover_file = request.files.get('cover')
+            else:
+                data = request.get_json(silent=True) or {}
+                avatar_file = None
+                cover_file = None
+
+            if 'display_name' in data:
+                dname = data.get('display_name', '').strip()
+                if dname:
+                    user.display_name = dname[:100]
+
+            if 'bio' in data:
+                user.bio = data.get('bio', '').strip()
+
+            if avatar_file:
+                avatar_path, err = handle_image_upload(avatar_file)
+                if err:
+                    return jsonify({'success': False, 'message': f'Avatar: {err}'}), 400
+                if avatar_path:
+                    if user.avatar_url and user.avatar_url != avatar_path:
+                        delete_local_image_if_exists(user.avatar_url)
+                    user.avatar_url = avatar_path
+            elif 'avatar_url' in data:
+                new_avatar = data.get('avatar_url', '').strip()
+                if new_avatar != user.avatar_url:
+                    delete_local_image_if_exists(user.avatar_url)
+                    user.avatar_url = new_avatar[:255]
+
+            if cover_file:
+                cover_path, err = handle_image_upload(cover_file)
+                if err:
+                    return jsonify({'success': False, 'message': f'Ảnh bìa: {err}'}), 400
+                if cover_path:
+                    if user.cover_url and user.cover_url != cover_path:
+                        delete_local_image_if_exists(user.cover_url)
+                    user.cover_url = cover_path
+            elif 'cover_url' in data:
+                new_cover = data.get('cover_url', '').strip()
+                if new_cover != user.cover_url:
+                    delete_local_image_if_exists(user.cover_url)
+                    user.cover_url = new_cover[:255]
+
+            user.updated_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': 'Cập nhật thông tin cá nhân thành công!',
+                'user': user.to_dict()
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Lỗi khi cập nhật profile: {str(e)}'}), 500
+
+    @app.route('/api/community/collections', methods=['GET'])
+    def get_community_collections():
+        """Retrieve public collections for the Community tab with search and sorting."""
+        try:
+            current_user_id = session.get('user_id')
+            query = Collection.query.filter_by(visibility='public')
+
+            search = request.args.get('search', '').strip()
+            if search:
+                term = f"%{search}%"
+                query = query.join(User).filter(
+                    or_(
+                        Collection.name.ilike(term),
+                        Collection.description.ilike(term),
+                        User.username.ilike(term),
+                        User.display_name.ilike(term)
+                    )
+                )
+
+            sort = request.args.get('sort', 'newest').strip()
+            if sort == 'oldest':
+                query = query.order_by(asc(Collection.created_at))
+            else:
+                query = query.order_by(desc(Collection.created_at))
+
+            collections = query.all()
+            result = [c.to_dict(current_user_id=current_user_id, include_models=True) for c in collections]
+
+            if sort == 'most_voted':
+                result.sort(key=lambda x: (x['votes_count'], x['model_count']), reverse=True)
+            elif sort == 'most_models':
+                result.sort(key=lambda x: (x['model_count'], x['votes_count']), reverse=True)
+
+            return jsonify({
+                'success': True,
+                'count': len(result),
+                'data': result
+            }), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Lỗi khi tải Community: {str(e)}'}), 500
+
+    @app.route('/api/collections/<int:col_id>/vote', methods=['POST'])
+    def toggle_vote_collection(col_id):
+        """Toggle vote on a public collection. Requires authentication."""
+        current_user_id = session.get('user_id')
+        if not current_user_id:
+            return jsonify({'success': False, 'message': 'Vui lòng đăng nhập để vote cho thư viện.'}), 401
+
+        col = db.session.get(Collection, col_id)
+        if not col:
+            return jsonify({'success': False, 'message': 'Không tìm thấy thư viện này.'}), 404
+
+        # Only public collections can receive votes
+        if col.visibility != 'public':
+            return jsonify({'success': False, 'message': 'Chỉ có thể vote cho thư viện công khai (Public).'}), 403
+
+        # Anti-self-vote rule
+        if col.owner_id == current_user_id:
+            return jsonify({'success': False, 'message': 'Bạn không thể tự vote cho thư viện của chính mình.'}), 400
+
+        try:
+            existing_vote = CollectionVote.query.filter_by(
+                collection_id=col_id,
+                user_id=current_user_id
+            ).first()
+
+            if existing_vote:
+                db.session.delete(existing_vote)
+                db.session.commit()
+                has_voted = False
+                action = 'unvoted'
+                message = 'Đã hủy vote thư viện.'
+            else:
+                new_vote = CollectionVote(collection_id=col_id, user_id=current_user_id)
+                db.session.add(new_vote)
+                db.session.commit()
+                has_voted = True
+                action = 'voted'
+                message = 'Đã vote cho thư viện thành công!'
+
+            votes_count = CollectionVote.query.filter_by(collection_id=col_id).count()
+
+            return jsonify({
+                'success': True,
+                'action': action,
+                'has_voted': has_voted,
+                'votes_count': votes_count,
+                'message': message
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Lỗi khi thao tác vote: {str(e)}'}), 500
+
+    @app.route('/api/collections/leaderboard', methods=['GET'])
+    def get_collections_leaderboard():
+        """
+        Leaderboard ranking public collections by vote count.
+        Supports:
+          - ?period=all (All Time total votes)
+          - ?period=month (Votes created within current calendar month)
+        """
+        try:
+            current_user_id = session.get('user_id')
+            period = request.args.get('period', 'all').lower().strip()
+
+            public_cols = Collection.query.filter_by(visibility='public').all()
+            leaderboard = []
+
+            now = datetime.now(timezone.utc)
+            start_of_month = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+
+            for col in public_cols:
+                if period == 'month':
+                    votes_count = col.votes.filter(CollectionVote.created_at >= start_of_month).count()
+                else:
+                    votes_count = col.votes.count()
+
+                has_voted = False
+                if current_user_id:
+                    has_voted = col.votes.filter_by(user_id=current_user_id).first() is not None
+
+                leaderboard.append({
+                    'id': col.id,
+                    'name': col.name,
+                    'description': col.description or '',
+                    'cover_image_url': col.cover_image_url or '',
+                    'owner_id': col.owner_id,
+                    'owner_name': (col.owner.display_name or col.owner.username) if col.owner else None,
+                    'owner_username': col.owner.username if col.owner else '',
+                    'owner_avatar': (col.owner.avatar_url or '') if col.owner else '',
+                    'model_count': len(col.models),
+                    'votes_count': votes_count,
+                    'has_voted': has_voted,
+                    'created_at': col.created_at.strftime('%Y-%m-%d %H:%M:%S') if col.created_at else None
+                })
+
+            # Sort descending by votes_count, then by model_count
+            leaderboard.sort(key=lambda x: (x['votes_count'], x['model_count']), reverse=True)
+
+            # Assign rank 1, 2, 3...
+            for idx, item in enumerate(leaderboard):
+                item['rank'] = idx + 1
+
+            return jsonify({
+                'success': True,
+                'period': period,
+                'count': len(leaderboard),
+                'data': leaderboard
+            }), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Lỗi khi tải bảng xếp hạng: {str(e)}'}), 500
+
+    # -------------------------------------------------------------------------
     # Frontend SPA Route Serving
     # -------------------------------------------------------------------------
+    @app.route('/u/<username>')
+    def serve_profile_page(username):
+        frontend_dir = os.path.join(os.path.dirname(Config.BASE_DIR), 'frontend')
+        return send_from_directory(frontend_dir, 'index.html')
+
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve_frontend(path):

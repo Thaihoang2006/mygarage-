@@ -187,7 +187,43 @@ const i18n = {
         selectColPrompt: 'Chọn thư viện để lưu mô hình:',
         labelChooseCol: 'Thư viện của bạn',
         btnConfirmAdd: 'Thêm Vào',
-        requireLoginToAdd: 'Vui lòng đăng nhập để thêm mô hình vào garage của bạn.'
+        requireLoginToAdd: 'Vui lòng đăng nhập để thêm mô hình vào garage của bạn.',
+
+        // Community & Leaderboard & Profile
+        navCommunity: 'Cộng Đồng',
+        navLeaderboard: 'Top Collections',
+        navProfile: 'Trang Cá Nhân',
+        communityTitle: 'Cộng Đồng Sưu Tầm',
+        communitySubtitle: 'Khám phá các thư viện mô hình công khai được chia sẻ bởi cộng đồng đam mê',
+        searchCommunityPlaceholder: 'Tìm kiếm bộ sưu tập, người sưu tầm...',
+        sortMostVoted: 'Nhiều lượt vote nhất',
+        sortMostModels: 'Nhiều mô hình nhất',
+        communityEmptyTitle: 'Không Tìm Thấy Bộ Sưu Tập Nào',
+        communityEmptyDesc: 'Chưa có bộ sưu tập công khai nào phù hợp với từ khóa tìm kiếm.',
+        leaderboardTitle: 'Bảng Xếp Hạng Bộ Sưu Tập',
+        leaderboardSubtitle: 'Vinh danh các thư viện mô hình được yêu thích và bình chọn nhiều nhất',
+        lbTabAllTime: 'Toàn Thời Gian (All Time)',
+        lbTabThisMonth: 'Tháng Này (This Month)',
+        lbEmptyTitle: 'Chưa Có Bảng Xếp Hạng',
+        lbEmptyDesc: 'Hãy là người đầu tiên chia sẻ thư viện công khai và nhận những lượt vote đầu tiên!',
+        btnEditProfile: 'Chỉnh Sửa Hồ Sơ',
+        joinedDate: 'Tham gia:',
+        statPublicLibs: 'Thư Viện Công Khai',
+        statPublicModels: 'Mô Hình Công Khai',
+        statTotalVotes: 'Lượt Vote Nhận Được',
+        userCollectionsTitle: 'Danh Sách Thư Viện',
+        profileEmptyTitle: 'Chưa Có Thư Viện Công Khai',
+        profileEmptyDesc: 'Người dùng này chưa công khai thư viện mô hình nào.',
+        editProfileTitle: 'Chỉnh Sửa Thông Tin Cá Nhân',
+        fieldBio: 'Giới thiệu bản thân (Bio)',
+        fieldAvatar: 'Ảnh đại diện (URL hoặc tải tệp)',
+        fieldCover: 'Ảnh bìa cá nhân (URL hoặc tải tệp)',
+        btnSaveProfile: 'Lưu Thay Đổi',
+        btnVote: 'Vote',
+        btnVoted: 'Đã Vote',
+        voteRequireLogin: 'Vui lòng đăng nhập để bình chọn bộ sưu tập!',
+        cannotSelfVote: 'Bạn không thể tự vote cho bộ sưu tập của chính mình.',
+        viewCollection: 'Chi tiết'
     },
     en: {
         tagline: 'COLLECTION MANAGER',
@@ -349,7 +385,43 @@ const i18n = {
         selectColPrompt: 'Choose a library for this model:',
         labelChooseCol: 'Your Libraries',
         btnConfirmAdd: 'Add Model',
-        requireLoginToAdd: 'Please sign in to add models to your garage.'
+        requireLoginToAdd: 'Please sign in to add models to your garage.',
+
+        // Community & Leaderboard & Profile
+        navCommunity: 'Community',
+        navLeaderboard: 'Top Collections',
+        navProfile: 'User Profile',
+        communityTitle: 'Collector Community',
+        communitySubtitle: 'Discover public model libraries curated and shared by enthusiasts',
+        searchCommunityPlaceholder: 'Search collections, collectors...',
+        sortMostVoted: 'Most Voted',
+        sortMostModels: 'Most Models',
+        communityEmptyTitle: 'No Collections Found',
+        communityEmptyDesc: 'No public collections match your search criteria.',
+        leaderboardTitle: 'Collection Leaderboard',
+        leaderboardSubtitle: 'Honoring the most celebrated and highly-voted miniature showcases',
+        lbTabAllTime: 'All Time',
+        lbTabThisMonth: 'This Month',
+        lbEmptyTitle: 'No Leaderboard Data',
+        lbEmptyDesc: 'Be the first to share a public library and earn community votes!',
+        btnEditProfile: 'Edit Profile',
+        joinedDate: 'Joined:',
+        statPublicLibs: 'Public Libraries',
+        statPublicModels: 'Public Models',
+        statTotalVotes: 'Total Votes Received',
+        userCollectionsTitle: 'Curated Libraries',
+        profileEmptyTitle: 'No Public Libraries',
+        profileEmptyDesc: 'This user has not published any public model collections yet.',
+        editProfileTitle: 'Edit User Profile',
+        fieldBio: 'Personal Bio',
+        fieldAvatar: 'Avatar (URL or upload file)',
+        fieldCover: 'Cover Banner (URL or upload file)',
+        btnSaveProfile: 'Save Changes',
+        btnVote: 'Vote',
+        btnVoted: 'Voted',
+        voteRequireLogin: 'Please sign in to vote for collections!',
+        cannotSelfVote: 'You cannot vote for your own collection.',
+        viewCollection: 'Details'
     }
 };
 
@@ -379,6 +451,15 @@ const state = {
     activeColTab: 'my',
     selectedColId: null,
     selectedModelForCol: null,
+
+    // Community & Leaderboard & Profile State
+    communityCollections: [],
+    communitySearch: '',
+    communitySort: 'most_voted',
+    leaderboardPeriod: 'all',
+    leaderboardData: [],
+    currentProfileUsername: null,
+    profileData: null,
 
     charts: {
         category: null,
@@ -589,6 +670,46 @@ const dom = {
     cancelAddToColBtn: document.getElementById('cancelAddToColBtn'),
     confirmAddToColBtn: document.getElementById('confirmAddToColBtn'),
     closeAddToColModalBtn: document.getElementById('closeAddToColModalBtn'),
+
+    // Community View Elements
+    communitySearchInput: document.getElementById('communitySearchInput'),
+    clearCommunitySearchBtn: document.getElementById('clearCommunitySearchBtn'),
+    communitySortSelect: document.getElementById('communitySortSelect'),
+    communityGrid: document.getElementById('communityGrid'),
+    communityEmptyState: document.getElementById('communityEmptyState'),
+
+    // Top Collections Leaderboard Elements
+    tabLbAllTime: document.getElementById('tabLbAllTime'),
+    tabLbThisMonth: document.getElementById('tabLbThisMonth'),
+    leaderboardList: document.getElementById('leaderboardList'),
+    leaderboardEmptyState: document.getElementById('leaderboardEmptyState'),
+
+    // User Profile Elements
+    profileCoverBanner: document.getElementById('profileCoverBanner'),
+    profileAvatarLarge: document.getElementById('profileAvatarLarge'),
+    profileDisplayName: document.getElementById('profileDisplayName'),
+    profileUsername: document.getElementById('profileUsername'),
+    profileOwnerControls: document.getElementById('profileOwnerControls'),
+    openEditProfileBtn: document.getElementById('openEditProfileBtn'),
+    profileBio: document.getElementById('profileBio'),
+    profileJoinedDate: document.getElementById('profileJoinedDate'),
+    profileStatCollections: document.getElementById('profileStatCollections'),
+    profileStatModels: document.getElementById('profileStatModels'),
+    profileStatVotes: document.getElementById('profileStatVotes'),
+    profileCollectionsGrid: document.getElementById('profileCollectionsGrid'),
+    profileEmptyState: document.getElementById('profileEmptyState'),
+
+    // Edit Profile Modal
+    editProfileModal: document.getElementById('editProfileModal'),
+    editProfileForm: document.getElementById('editProfileForm'),
+    closeEditProfileModalBtn: document.getElementById('closeEditProfileModalBtn'),
+    cancelEditProfileBtn: document.getElementById('cancelEditProfileBtn'),
+    editProfileDisplayName: document.getElementById('editProfileDisplayName'),
+    editProfileBio: document.getElementById('editProfileBio'),
+    editProfileAvatarUrl: document.getElementById('editProfileAvatarUrl'),
+    editProfileAvatarFile: document.getElementById('editProfileAvatarFile'),
+    editProfileCoverUrl: document.getElementById('editProfileCoverUrl'),
+    editProfileCoverFile: document.getElementById('editProfileCoverFile'),
 
     // Toast Container
     toastContainer: document.getElementById('toastContainer')
@@ -847,13 +968,18 @@ const updateAuthUI = () => {
             : 'U';
 
         if (dom.topUserName) dom.topUserName.textContent = displayName;
-        if (dom.topAvatar) dom.topAvatar.textContent = initials;
+        if (state.currentUser.avatar_url) {
+            dom.topAvatar.innerHTML = `<img src="${sanitizeImageUrl(state.currentUser.avatar_url)}" alt="${displayName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            dom.sidebarAvatar.innerHTML = `<img src="${sanitizeImageUrl(state.currentUser.avatar_url)}" alt="${displayName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+            dom.topAvatar.textContent = initials;
+            dom.sidebarAvatar.textContent = initials;
+        }
         if (dom.topUserProfile) dom.topUserProfile.classList.remove('hidden');
         if (dom.topLoginBtn) dom.topLoginBtn.classList.add('hidden');
 
         if (dom.sidebarUserName) dom.sidebarUserName.textContent = displayName;
         if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = `@${state.currentUser.username}`;
-        if (dom.sidebarAvatar) dom.sidebarAvatar.textContent = initials;
         if (dom.sidebarUserBox) dom.sidebarUserBox.classList.remove('hidden');
         if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.classList.add('hidden');
     } else {
@@ -1054,6 +1180,9 @@ const navigateTo = (viewName) => {
         'dashboard': dict.navDashboard,
         'collection': dict.navCollection,
         'libraries': dict.navLibraries,
+        'community': dict.navCommunity,
+        'leaderboard': dict.navLeaderboard,
+        'profile': dict.navProfile,
         'add-model': dict.navAddModel
     };
     dom.currentViewCrumb.textContent = titles[viewName] || dict.navDashboard;
@@ -1067,6 +1196,19 @@ const navigateTo = (viewName) => {
         loadModels();
     } else if (viewName === 'libraries') {
         loadCollections();
+    } else if (viewName === 'community') {
+        loadCommunityCollections(state.communitySearch, state.communitySort);
+    } else if (viewName === 'leaderboard') {
+        loadLeaderboard(state.leaderboardPeriod || 'all');
+    } else if (viewName === 'profile') {
+        if (state.currentProfileUsername) {
+            loadUserProfile(state.currentProfileUsername);
+        } else if (state.currentUser) {
+            navigateToProfile(state.currentUser.username);
+        } else {
+            showToast(state.currentLang === 'vi' ? 'Vui lòng đăng nhập để xem hồ sơ của bạn.' : 'Please sign in to view your profile.', 'info');
+            openAuthModal('login');
+        }
     }
 };
 
@@ -1104,6 +1246,23 @@ const checkSystemReadiness = async () => {
 // DASHBOARD STATS & CHARTS (CHART.JS WITH PALETTE -02)
 // ============================================================================
 const loadDashboardStats = async () => {
+    if (!state.currentUser) {
+        state.stats = null;
+        dom.statTotalCount.textContent = '0';
+        dom.statCarCount.textContent = '0';
+        dom.statGundamCount.textContent = '0';
+        dom.statOtherCount.textContent = '0';
+        dom.statTotalValue.textContent = '—';
+        dom.sidebarTotalValue.textContent = '—';
+        dom.statCarPercent.textContent = '0%';
+        dom.statGundamPercent.textContent = '0%';
+        dom.statOtherPercent.textContent = '0%';
+        renderCategoryChart({});
+        renderBrandChart([]);
+        renderRecentModels([]);
+        return;
+    }
+
     try {
         const res = await fetch(`${API_BASE}/api/stats`, {
             credentials: 'include'
@@ -1335,6 +1494,14 @@ const updateBrandFilterOptions = (brands) => {
 };
 
 const loadModels = async () => {
+    if (!state.currentUser) {
+        state.models = [];
+        renderModelsGrid([]);
+        dom.collectionResultsCount.textContent = '0';
+        dom.navCountBadge.textContent = '0';
+        return;
+    }
+
     try {
         const params = new URLSearchParams();
         if (state.searchQuery) params.append('search', state.searchQuery);
@@ -2200,6 +2367,527 @@ const handleConfirmAddToCol = async () => {
 };
 
 // ============================================================================
+// COLLECTION VOTING SYSTEM
+// ============================================================================
+const toggleVote = async (colId, btnEl) => {
+    if (!state.currentUser) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng đăng nhập để bình chọn bộ sưu tập!' : 'Please sign in to vote for collections!', 'info');
+        openAuthModal('login');
+        return;
+    }
+
+    try {
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/collections/${colId}/vote`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: headers
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+            throw new Error(json.message || 'Cannot vote');
+        }
+
+        showToast(json.message, 'success');
+
+        // Update all vote buttons and badges with this colId on the screen
+        document.querySelectorAll(`.vote-btn[data-col-id="${colId}"]`).forEach(btn => {
+            const countEl = btn.querySelector('.vote-count');
+            if (countEl) countEl.textContent = json.votes_count;
+            if (json.has_voted) {
+                btn.classList.add('voted');
+                btn.title = state.currentLang === 'vi' ? 'Bỏ thích' : 'Unlike';
+            } else {
+                btn.classList.remove('voted');
+                btn.title = state.currentLang === 'vi' ? 'Bình chọn' : 'Vote';
+            }
+        });
+
+        document.querySelectorAll(`.lb-vote-stat[data-col-id="${colId}"] .vote-count`).forEach(el => {
+            el.textContent = json.votes_count;
+        });
+
+        // If on user profile, reload stats
+        if (state.currentView === 'profile' && state.currentProfileUsername) {
+            loadUserProfile(state.currentProfileUsername);
+        }
+
+    } catch (err) {
+        showToast(err.message || 'Vote failed', 'error');
+    }
+};
+
+// ============================================================================
+// COMMUNITY COLLECTIONS
+// ============================================================================
+const loadCommunityCollections = async (search = state.communitySearch, sort = state.communitySort) => {
+    state.communitySearch = search || '';
+    state.communitySort = sort || 'most_voted';
+
+    try {
+        const params = new URLSearchParams();
+        if (state.communitySearch) params.append('search', state.communitySearch);
+        if (state.communitySort) params.append('sort', state.communitySort);
+
+        const res = await fetch(`${API_BASE}/api/community/collections?${params.toString()}`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        state.communityCollections = json.data || [];
+        renderCommunityGrid(state.communityCollections);
+    } catch (err) {
+        console.error('Lỗi tải cộng đồng:', err);
+        showToast(err.message || 'Error loading community collections', 'error');
+    }
+};
+
+const renderCommunityGrid = (cols) => {
+    if (!cols || cols.length === 0) {
+        dom.communityGrid.innerHTML = '';
+        dom.communityEmptyState.classList.remove('hidden');
+        return;
+    }
+    dom.communityEmptyState.classList.add('hidden');
+
+    const dict = i18n[state.currentLang] || i18n.vi;
+
+    dom.communityGrid.innerHTML = cols.map(col => {
+        const cover = col.cover_image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80';
+        const ownerInitial = (col.owner_name || col.owner_username || 'U').charAt(0).toUpperCase();
+        const avatarHtml = col.owner_avatar 
+            ? `<img src="${sanitizeImageUrl(col.owner_avatar)}" alt="${col.owner_name}">`
+            : ownerInitial;
+
+        return `
+            <div class="collection-card" data-col-id="${col.id}">
+                <div class="collection-cover" style="background-image: url('${cover}');">
+                    <div class="collection-cover-overlay"></div>
+                    <div class="collection-badge-wrap">
+                        <span class="badge-privacy badge-public">
+                            <i class="fa-solid fa-globe"></i> ${state.currentLang === 'vi' ? 'Công khai' : 'Public'}
+                        </span>
+                    </div>
+                </div>
+                <div class="collection-body">
+                    <div class="col-card-creator" data-username="${col.owner_username}" title="${state.currentLang === 'vi' ? 'Xem trang cá nhân' : 'View profile'}">
+                        <div class="creator-avatar">${avatarHtml}</div>
+                        <div class="creator-meta">
+                            <span class="creator-name">${col.owner_name || col.owner_username}</span>
+                            <span class="creator-username">@${col.owner_username}</span>
+                        </div>
+                    </div>
+
+                    <h3 class="collection-title">${col.name}</h3>
+                    <p class="collection-desc">${col.description || (state.currentLang === 'vi' ? 'Chưa có mô tả' : 'No description')}</p>
+                    
+                    <div class="col-card-footer">
+                        <span class="col-stats-badge">
+                            <i class="fa-solid fa-shapes"></i> ${col.model_count || 0} ${dict.unitModels}
+                        </span>
+                        <button class="vote-btn ${col.has_voted ? 'voted' : ''}" data-col-id="${col.id}" title="${col.has_voted ? (state.currentLang === 'vi' ? 'Bỏ thích' : 'Unlike') : (state.currentLang === 'vi' ? 'Bình chọn' : 'Vote')}">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="vote-count">${col.votes_count || 0}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    dom.communityGrid.querySelectorAll('.collection-card').forEach(card => {
+        const colId = parseInt(card.getAttribute('data-col-id'), 10);
+
+        const creatorEl = card.querySelector('.col-card-creator');
+        if (creatorEl) {
+            creatorEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const username = creatorEl.getAttribute('data-username');
+                if (username) navigateToProfile(username);
+            });
+        }
+
+        const voteBtn = card.querySelector('.vote-btn');
+        if (voteBtn) {
+            voteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleVote(colId, voteBtn);
+            });
+        }
+
+        card.addEventListener('click', () => {
+            openCollectionDetails(colId);
+        });
+    });
+};
+
+// ============================================================================
+// TOP COLLECTIONS LEADERBOARD
+// ============================================================================
+const loadLeaderboard = async (period = state.leaderboardPeriod || 'all') => {
+    state.leaderboardPeriod = period;
+
+    if (dom.tabLbAllTime && dom.tabLbThisMonth) {
+        if (period === 'all') {
+            dom.tabLbAllTime.classList.add('active');
+            dom.tabLbThisMonth.classList.remove('active');
+        } else {
+            dom.tabLbAllTime.classList.remove('active');
+            dom.tabLbThisMonth.classList.add('active');
+        }
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/collections/leaderboard?period=${period}`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        state.leaderboardData = json.data || [];
+        renderLeaderboard(state.leaderboardData);
+    } catch (err) {
+        console.error('Lỗi tải bảng xếp hạng:', err);
+        showToast(err.message || 'Error loading leaderboard', 'error');
+    }
+};
+
+const renderLeaderboard = (items) => {
+    if (!items || items.length === 0) {
+        dom.leaderboardList.innerHTML = '';
+        dom.leaderboardEmptyState.classList.remove('hidden');
+        return;
+    }
+    dom.leaderboardEmptyState.classList.add('hidden');
+
+    const dict = i18n[state.currentLang] || i18n.vi;
+
+    dom.leaderboardList.innerHTML = items.map((col, index) => {
+        const rank = col.rank || (index + 1);
+        let rankClass = 'rank-other';
+        let rankIconOrNum = `#${rank}`;
+        if (rank === 1) {
+            rankClass = 'rank-1';
+            rankIconOrNum = '<i class="fa-solid fa-crown"></i>';
+        } else if (rank === 2) {
+            rankClass = 'rank-2';
+        } else if (rank === 3) {
+            rankClass = 'rank-3';
+        }
+
+        const cover = col.cover_image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80';
+        const ownerInitial = (col.owner_name || col.owner_username || 'U').charAt(0).toUpperCase();
+        const avatarHtml = col.owner_avatar 
+            ? `<img src="${sanitizeImageUrl(col.owner_avatar)}" alt="${col.owner_name}">`
+            : ownerInitial;
+
+        return `
+            <div class="leaderboard-card" data-col-id="${col.id}">
+                <div class="rank-badge ${rankClass}">${rankIconOrNum}</div>
+                <img class="lb-thumb" src="${sanitizeImageUrl(cover)}" alt="${col.name}">
+                <div class="lb-info">
+                    <h3 class="lb-title">${col.name}</h3>
+                    <div class="lb-meta">
+                        <div class="col-card-creator" data-username="${col.owner_username}" style="margin-bottom: 0;" title="${state.currentLang === 'vi' ? 'Xem trang cá nhân' : 'View profile'}">
+                            <div class="creator-avatar" style="width: 24px; height: 24px; font-size: 0.65rem;">${avatarHtml}</div>
+                            <span class="creator-name" style="font-size: 0.8rem;">${col.owner_name || col.owner_username}</span>
+                        </div>
+                        <span><i class="fa-solid fa-shapes"></i> ${col.model_count || 0} ${dict.unitModels}</span>
+                        <div class="lb-vote-stat" data-col-id="${col.id}">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="vote-count">${col.votes_count || 0}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="vote-btn ${col.has_voted ? 'voted' : ''}" data-col-id="${col.id}" title="${col.has_voted ? (state.currentLang === 'vi' ? 'Bỏ thích' : 'Unlike') : (state.currentLang === 'vi' ? 'Bình chọn' : 'Vote')}">
+                        <i class="fa-solid fa-heart"></i>
+                    </button>
+                    <button class="btn btn-outline btn-sm lb-detail-btn" data-col-id="${col.id}">
+                        ${dict.viewCollection || 'Chi tiết'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    dom.leaderboardList.querySelectorAll('.leaderboard-card').forEach(card => {
+        const colId = parseInt(card.getAttribute('data-col-id'), 10);
+
+        const creatorEl = card.querySelector('.col-card-creator');
+        if (creatorEl) {
+            creatorEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const username = creatorEl.getAttribute('data-username');
+                if (username) navigateToProfile(username);
+            });
+        }
+
+        const voteBtn = card.querySelector('.vote-btn');
+        if (voteBtn) {
+            voteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleVote(colId, voteBtn);
+            });
+        }
+
+        const detailBtn = card.querySelector('.lb-detail-btn');
+        if (detailBtn) {
+            detailBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openCollectionDetails(colId);
+            });
+        }
+
+        card.addEventListener('click', () => {
+            openCollectionDetails(colId);
+        });
+    });
+};
+
+// ============================================================================
+// USER PROFILE (/u/username)
+// ============================================================================
+const navigateToProfile = async (username, pushState = true) => {
+    if (!username) {
+        if (state.currentUser) {
+            username = state.currentUser.username;
+        } else {
+            showToast(state.currentLang === 'vi' ? 'Không tìm thấy người dùng.' : 'User not found.', 'error');
+            return;
+        }
+    }
+
+    state.currentProfileUsername = username;
+    navigateTo('profile');
+
+    if (pushState && window.location.pathname !== `/u/${username}`) {
+        window.history.pushState({ username }, '', `/u/${username}`);
+    }
+
+    await loadUserProfile(username);
+};
+
+const loadUserProfile = async (username) => {
+    try {
+        dom.profileDisplayName.textContent = state.currentLang === 'vi' ? 'Đang tải...' : 'Loading...';
+        dom.profileUsername.textContent = `@${username}`;
+
+        const res = await fetch(`${API_BASE}/api/users/${encodeURIComponent(username)}/profile`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        const data = json.data;
+        state.profileData = data;
+
+        // Cover banner
+        if (data.cover_url) {
+            dom.profileCoverBanner.style.backgroundImage = `url('${sanitizeImageUrl(data.cover_url)}')`;
+        } else {
+            dom.profileCoverBanner.style.backgroundImage = '';
+        }
+
+        // Avatar
+        const initials = (data.display_name || data.username || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        if (data.avatar_url) {
+            dom.profileAvatarLarge.innerHTML = `<img src="${sanitizeImageUrl(data.avatar_url)}" alt="${data.display_name}">`;
+        } else {
+            dom.profileAvatarLarge.textContent = initials;
+        }
+
+        // Text metadata
+        dom.profileDisplayName.textContent = data.display_name || data.username;
+        dom.profileUsername.textContent = `@${data.username}`;
+        dom.profileBio.textContent = data.bio || (state.currentLang === 'vi' ? 'Người dùng này chưa cập nhật tiểu sử.' : 'No bio provided.');
+
+        if (data.created_at) {
+            const dateObj = new Date(data.created_at);
+            dom.profileJoinedDate.textContent = dateObj.toLocaleDateString(state.currentLang === 'vi' ? 'vi-VN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            dom.profileJoinedDate.textContent = '—';
+        }
+
+        // Stats
+        dom.profileStatCollections.textContent = (data.stats && data.stats.public_collections_count) || 0;
+        dom.profileStatModels.textContent = (data.stats && data.stats.public_models_count) || 0;
+        dom.profileStatVotes.textContent = (data.stats && data.stats.total_votes_received) || 0;
+
+        // Owner Controls
+        if (data.is_self) {
+            dom.profileOwnerControls.classList.remove('hidden');
+        } else {
+            dom.profileOwnerControls.classList.add('hidden');
+        }
+
+        renderProfileCollections(data.collections || []);
+
+    } catch (err) {
+        console.error('Lỗi tải profile:', err);
+        showToast(err.message || 'Cannot load profile', 'error');
+    }
+};
+
+const renderProfileCollections = (cols) => {
+    if (!cols || cols.length === 0) {
+        dom.profileCollectionsGrid.innerHTML = '';
+        dom.profileEmptyState.classList.remove('hidden');
+        return;
+    }
+    dom.profileEmptyState.classList.add('hidden');
+
+    const dict = i18n[state.currentLang] || i18n.vi;
+
+    dom.profileCollectionsGrid.innerHTML = cols.map(col => {
+        const cover = col.cover_image_url || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80';
+        const isPriv = col.visibility === 'private';
+        const badgeClass = isPriv ? 'badge-private' : 'badge-public';
+        const badgeIcon = isPriv ? 'fa-lock' : 'fa-globe';
+        const badgeText = isPriv 
+            ? (state.currentLang === 'vi' ? 'Riêng tư' : 'Private') 
+            : (state.currentLang === 'vi' ? 'Công khai' : 'Public');
+
+        return `
+            <div class="collection-card" data-col-id="${col.id}">
+                <div class="collection-cover" style="background-image: url('${cover}');">
+                    <div class="collection-cover-overlay"></div>
+                    <div class="collection-badge-wrap">
+                        <span class="badge-privacy ${badgeClass}">
+                            <i class="fa-solid ${badgeIcon}"></i> ${badgeText}
+                        </span>
+                    </div>
+                </div>
+                <div class="collection-body">
+                    <h3 class="collection-title">${col.name}</h3>
+                    <p class="collection-desc">${col.description || (state.currentLang === 'vi' ? 'Chưa có mô tả' : 'No description')}</p>
+                    <div class="col-card-footer">
+                        <span class="col-stats-badge">
+                            <i class="fa-solid fa-shapes"></i> ${col.model_count || 0} ${dict.unitModels}
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${!isPriv ? `
+                                <button class="vote-btn ${col.has_voted ? 'voted' : ''}" data-col-id="${col.id}" title="${col.has_voted ? (state.currentLang === 'vi' ? 'Bỏ thích' : 'Unlike') : (state.currentLang === 'vi' ? 'Bình chọn' : 'Vote')}">
+                                    <i class="fa-solid fa-heart"></i>
+                                    <span class="vote-count">${col.votes_count || 0}</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    dom.profileCollectionsGrid.querySelectorAll('.collection-card').forEach(card => {
+        const colId = parseInt(card.getAttribute('data-col-id'), 10);
+
+        const voteBtn = card.querySelector('.vote-btn');
+        if (voteBtn) {
+            voteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleVote(colId, voteBtn);
+            });
+        }
+
+        card.addEventListener('click', () => {
+            openCollectionDetails(colId);
+        });
+    });
+};
+
+// Edit Profile Modal
+const openEditProfileModal = () => {
+    if (!state.currentUser) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng đăng nhập!' : 'Please sign in!', 'error');
+        openAuthModal('login');
+        return;
+    }
+
+    const data = state.profileData || state.currentUser;
+    dom.editProfileDisplayName.value = data.display_name || '';
+    dom.editProfileBio.value = data.bio || '';
+    dom.editProfileAvatarUrl.value = data.avatar_url || '';
+    dom.editProfileCoverUrl.value = data.cover_url || '';
+    if (dom.editProfileAvatarFile) dom.editProfileAvatarFile.value = '';
+    if (dom.editProfileCoverFile) dom.editProfileCoverFile.value = '';
+
+    dom.editProfileModal.classList.add('show');
+    dom.editProfileDisplayName.focus();
+};
+
+const closeEditProfileModal = () => {
+    dom.editProfileModal.classList.remove('show');
+};
+
+const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+
+    const displayName = dom.editProfileDisplayName.value.trim();
+    if (!displayName) {
+        showToast(state.currentLang === 'vi' ? 'Vui lòng nhập tên hiển thị!' : 'Please enter display name!', 'error');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('display_name', displayName);
+        formData.append('bio', dom.editProfileBio.value.trim());
+
+        const avatarFile = dom.editProfileAvatarFile && dom.editProfileAvatarFile.files[0];
+        const coverFile = dom.editProfileCoverFile && dom.editProfileCoverFile.files[0];
+
+        if (avatarFile) {
+            formData.append('avatar', avatarFile);
+        } else if (dom.editProfileAvatarUrl.value.trim()) {
+            formData.append('avatar_url', dom.editProfileAvatarUrl.value.trim());
+        }
+
+        if (coverFile) {
+            formData.append('cover', coverFile);
+        } else if (dom.editProfileCoverUrl.value.trim()) {
+            formData.append('cover_url', dom.editProfileCoverUrl.value.trim());
+        }
+
+        const headers = {};
+        if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+
+        const res = await fetch(`${API_BASE}/api/users/profile`, {
+            method: 'PUT',
+            headers: headers,
+            credentials: 'include',
+            body: formData
+        });
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+
+        showToast(json.message, 'success');
+        closeEditProfileModal();
+
+        // Update local current user state
+        if (state.currentUser) {
+            state.currentUser.display_name = json.data.display_name;
+            state.currentUser.avatar_url = json.data.avatar_url;
+            state.currentUser.cover_url = json.data.cover_url;
+            updateAuthUI();
+        }
+
+        if (state.currentProfileUsername) {
+            await loadUserProfile(state.currentProfileUsername);
+        }
+
+    } catch (err) {
+        console.error('Lỗi cập nhật hồ sơ:', err);
+        showToast(err.message || 'Cannot update profile', 'error');
+    }
+};
+
+// ============================================================================
 // FILTER & SEARCH LOGIC
 // ============================================================================
 const setupFilterEvents = () => {
@@ -2335,7 +3023,22 @@ const initEventListeners = () => {
     });
 
     // Auth & Login UI
-    if (dom.topUserProfile) dom.topUserProfile.addEventListener('click', () => openAuthModal('login'));
+    if (dom.topUserProfile) {
+        dom.topUserProfile.addEventListener('click', () => {
+            if (state.currentUser) {
+                navigateToProfile(state.currentUser.username);
+            } else {
+                openAuthModal('login');
+            }
+        });
+    }
+    if (dom.sidebarUserBox) {
+        dom.sidebarUserBox.addEventListener('click', () => {
+            if (state.currentUser) {
+                navigateToProfile(state.currentUser.username);
+            }
+        });
+    }
     if (dom.topLoginBtn) dom.topLoginBtn.addEventListener('click', () => openAuthModal('login'));
     if (dom.sidebarLoginBtn) dom.sidebarLoginBtn.addEventListener('click', () => openAuthModal('login'));
     if (dom.quickLoginMobileBtn) dom.quickLoginMobileBtn.addEventListener('click', () => openAuthModal('login'));
@@ -2416,6 +3119,48 @@ const initEventListeners = () => {
     if (dom.cancelAddToColBtn) dom.cancelAddToColBtn.addEventListener('click', closeAddToCollectionModal);
     if (dom.confirmAddToColBtn) dom.confirmAddToColBtn.addEventListener('click', handleConfirmAddToCol);
 
+    // Community View Listeners
+    if (dom.communitySearchInput) {
+        let commDebounce = null;
+        dom.communitySearchInput.addEventListener('input', (e) => {
+            clearTimeout(commDebounce);
+            const q = e.target.value.trim();
+            if (dom.clearCommunitySearchBtn) dom.clearCommunitySearchBtn.classList.toggle('hidden', !q);
+            commDebounce = setTimeout(() => {
+                loadCommunityCollections(q, dom.communitySortSelect ? dom.communitySortSelect.value : 'most_voted');
+            }, 300);
+        });
+    }
+
+    if (dom.clearCommunitySearchBtn) {
+        dom.clearCommunitySearchBtn.addEventListener('click', () => {
+            if (dom.communitySearchInput) dom.communitySearchInput.value = '';
+            dom.clearCommunitySearchBtn.classList.add('hidden');
+            loadCommunityCollections('', dom.communitySortSelect ? dom.communitySortSelect.value : 'most_voted');
+        });
+    }
+
+    if (dom.communitySortSelect) {
+        dom.communitySortSelect.addEventListener('change', (e) => {
+            const q = dom.communitySearchInput ? dom.communitySearchInput.value.trim() : '';
+            loadCommunityCollections(q, e.target.value);
+        });
+    }
+
+    // Top Collections Leaderboard Tabs
+    if (dom.tabLbAllTime) {
+        dom.tabLbAllTime.addEventListener('click', () => loadLeaderboard('all'));
+    }
+    if (dom.tabLbThisMonth) {
+        dom.tabLbThisMonth.addEventListener('click', () => loadLeaderboard('month'));
+    }
+
+    // User Profile & Edit Profile Modal Listeners
+    if (dom.openEditProfileBtn) dom.openEditProfileBtn.addEventListener('click', openEditProfileModal);
+    if (dom.closeEditProfileModalBtn) dom.closeEditProfileModalBtn.addEventListener('click', closeEditProfileModal);
+    if (dom.cancelEditProfileBtn) dom.cancelEditProfileBtn.addEventListener('click', closeEditProfileModal);
+    if (dom.editProfileForm) dom.editProfileForm.addEventListener('submit', handleProfileUpdate);
+
     // Close modals on clicking backdrop
     [
         dom.detailsModal, 
@@ -2424,7 +3169,8 @@ const initEventListeners = () => {
         dom.authModal,
         dom.createCollectionModal,
         dom.colDetailModal,
-        dom.addToColModal
+        dom.addToColModal,
+        dom.editProfileModal
     ].forEach(modal => {
         if (modal) {
             modal.addEventListener('click', (e) => {
@@ -2445,7 +3191,22 @@ const initEventListeners = () => {
             closeCreateCollectionModal();
             closeCollectionDetails();
             closeAddToCollectionModal();
+            closeEditProfileModal();
             closeMobileSidebar();
+        }
+    });
+
+    // History popstate routing
+    window.addEventListener('popstate', () => {
+        const path = window.location.pathname;
+        const uMatch = path.match(/^\/u\/([a-zA-Z0-9_-]+)/);
+        if (uMatch) {
+            navigateToProfile(uMatch[1], false);
+        } else if (window.location.hash) {
+            const targetView = window.location.hash.replace('#', '');
+            if (targetView) navigateTo(targetView);
+        } else {
+            navigateTo('dashboard');
         }
     });
 
@@ -2468,8 +3229,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         openAuthModal('login');
     }
     checkSystemReadiness();
-    loadDashboardStats();
-    loadModels();
+
+    // Handle URL routing (/u/username or #hash)
+    const path = window.location.pathname;
+    const uMatch = path.match(/^\/u\/([a-zA-Z0-9_-]+)/);
+    if (uMatch) {
+        navigateToProfile(uMatch[1], false);
+    } else if (window.location.hash) {
+        const targetView = window.location.hash.replace('#', '');
+        if (['dashboard', 'collection', 'libraries', 'community', 'leaderboard', 'add-model'].includes(targetView)) {
+            navigateTo(targetView);
+        } else {
+            navigateTo('dashboard');
+        }
+    } else {
+        loadDashboardStats();
+        loadModels();
+    }
 
     setInterval(checkSystemReadiness, 30000);
 });

@@ -16,6 +16,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     display_name = db.Column(db.String(100), nullable=True)
     avatar_url = db.Column(db.String(255), nullable=True)
+    cover_url = db.Column(db.String(255), nullable=True)
     bio = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
     updated_at = db.Column(db.DateTime, nullable=False, default=utc_now, onupdate=utc_now)
@@ -36,6 +37,7 @@ class User(db.Model):
             'email': self.email,
             'display_name': self.display_name or self.username,
             'avatar_url': self.avatar_url or '',
+            'cover_url': self.cover_url or '',
             'bio': self.bio or '',
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
         }
@@ -78,8 +80,8 @@ class ModelItem(db.Model):
             'category': self.category or 'Other',
             'brand': self.brand or '',
             'scale': self.scale or '',
-            'price': float(self.price) if self.price is not None else None,
-            'purchase_date': self.purchase_date.strftime('%Y-%m-%d') if self.purchase_date else None,
+            'price': float(self.price) if (self.price is not None and is_owner) else None,
+            'purchase_date': self.purchase_date.strftime('%Y-%m-%d') if (self.purchase_date and is_owner) else None,
             'image_url': self.image_url or '',
             'description': self.description or '',
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
@@ -100,6 +102,24 @@ class CollectionModel(db.Model):
     added_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
 
+class CollectionVote(db.Model):
+    __tablename__ = 'collection_votes'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    collection_id = db.Column(db.Integer, db.ForeignKey('collections.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utc_now, index=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('collection_id', 'user_id', name='uq_col_user'),
+    )
+
+    user = db.relationship('User', backref=db.backref('collection_votes', lazy='dynamic'))
+
+    def __repr__(self):
+        return f"<CollectionVote {self.id}: User {self.user_id} -> Collection {self.collection_id}>"
+
+
 class Collection(db.Model):
     __tablename__ = 'collections'
 
@@ -114,20 +134,32 @@ class Collection(db.Model):
 
     owner = db.relationship('User', backref=db.backref('collections', lazy=True))
     models = db.relationship('ModelItem', secondary='collection_models', backref=db.backref('in_collections', lazy='dynamic'))
+    votes = db.relationship('CollectionVote', backref='collection', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self, current_user_id=None, include_models=False):
         """Serialize Collection object."""
         is_owner = (current_user_id is not None and self.owner_id == current_user_id)
+        
+        # Calculate vote metrics
+        votes_count = self.votes.count() if hasattr(self, 'votes') else 0
+        has_voted = False
+        if current_user_id and hasattr(self, 'votes'):
+            has_voted = self.votes.filter_by(user_id=current_user_id).first() is not None
+
         data = {
             'id': self.id,
             'owner_id': self.owner_id,
+            'owner_username': self.owner.username if self.owner else '',
             'owner_name': (self.owner.display_name or self.owner.username) if self.owner else None,
+            'owner_avatar': (self.owner.avatar_url or '') if self.owner else '',
             'is_owner': is_owner,
             'name': self.name,
             'description': self.description or '',
             'cover_image_url': self.cover_image_url or '',
             'visibility': self.visibility,
             'model_count': len(self.models),
+            'votes_count': votes_count,
+            'has_voted': has_voted,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None
         }

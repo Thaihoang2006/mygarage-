@@ -19,10 +19,12 @@ frontend/.env
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/uploads_backup/
+backend/uploads_backup_*/
 
 # Database Backups & Dumps
 *.sql
 !database/init.sql
+!database/migration_v3.sql
 database/backup*
 
 # SSH & Secrets
