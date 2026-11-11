@@ -29,8 +29,8 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: frontend
-        image: nthoang06/mygarage-frontend:v1
-        imagePullPolicy: IfNotPresent
+        image: nthoang06/mygarage-frontend:v3
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

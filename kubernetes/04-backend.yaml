@@ -36,8 +36,8 @@ spec:
           mountPath: /app/uploads
       containers:
       - name: backend
-        image: nthoang06/mygarage-backend:v1
-        imagePullPolicy: IfNotPresent
+        image: nthoang06/mygarage-backend:v3
+        imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: mygarage-config
